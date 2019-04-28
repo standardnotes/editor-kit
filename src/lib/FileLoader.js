@@ -6,6 +6,24 @@ export default class FileLoader {
     this.filesafe = filesafe;
     this.getElementsBySelector = getElementsBySelector;
     this.insertElement = insertElement;
+    this.currentlyLoadingIds = [];
+    this.statusElementMapping = {};
+
+    this.fileTypeToElementType = {
+      "image/png": "img",
+      "image/jpg": "img",
+      "image/jpeg": "img",
+      "image/gif": "img",
+      "image/tiff": "img",
+      "image/bmp": "img",
+      "video/mp4": "video",
+      "audio/mpeg": "audio",
+      "audio/mp3": "audio"
+    }
+  }
+
+  fileTypeForElementType(type) {
+    return this.fileTypeToElementType[type.toLowerCase()];
   }
 
   /*
@@ -26,8 +44,14 @@ export default class FileLoader {
   async loadFilesafeElement(fsElement) {
     let uuid = fsElement.getAttribute("fsid");
 
+    if(this.currentlyLoadingIds.includes(uuid)) {
+      console.log("Already loading file, returning");
+      return;
+    }
+
     let descriptor = this.filesafe.findFileDescriptor(uuid);
     if(!descriptor) {
+      this.setStatus("Unable to find file.", fsElement, uuid);
       console.log("Can't find descriptor with id", uuid);
       return {success: false};
     }
@@ -39,27 +63,75 @@ export default class FileLoader {
       return {success: false};
     }
 
-    this.setStatus("Downloading file...", fsElement);
+    const cleanup = () => {
+      this.currentlyLoadingIds.splice(this.currentlyLoadingIds.indexOf(uuid), 1);
+    }
+
+    this.currentlyLoadingIds.push(uuid);
+
+    this.setStatus("Downloading file...", fsElement, uuid);
     await Util.sleep(0.05); // Allow UI to update before beginning download
     let fileItem = await this.filesafe.downloadFileFromDescriptor(descriptor);
 
-    this.setStatus("Decrypting file...", fsElement);
+    this.setStatus("Decrypting file...", fsElement, uuid);
     await Util.sleep(0.05); // Allow UI to update before beginning decryption
     let data = await this.filesafe.decryptFile({fileDescriptor: descriptor, fileItem: fileItem})
 
     // Remove loading text
-    this.setStatus(null, fsElement);
+    this.setStatus(null, fsElement, uuid);
     await Util.sleep(0.05); // Allow UI to update before adding image
 
     // Generate temporary url, must be released later
-    let tempUrl = this.filesafe.createTemporaryFileUrl({base64Data: data.decryptedData, dataType: descriptor.content.fileType});
-    let imageElement = this.createImageElement(tempUrl, uuid);
-    this.insertElementAdjacent(imageElement, fsElement);
+    let fileType = descriptor.content.fileType;
+    let tempUrl = this.filesafe.createTemporaryFileUrl({base64Data: data.decryptedData, dataType: fileType});
+    let elementType = this.fileTypeForElementType(fileType);
+
+    let mediaElement;
+    if(elementType == "img") {
+      mediaElement = this.createImageElement(tempUrl, uuid);
+    } else if(elementType == "video") {
+      mediaElement = this.createVideoElement(tempUrl, uuid, fileType);
+    } else if(elementType == "audio") {
+      mediaElement = this.createAudioElement(tempUrl, uuid);
+    } else {
+      // File not supported
+      this.setStatus("File not supported.", fsElement, uuid);
+      cleanup();
+      return;
+    }
+
+    this.insertElementAdjacent(mediaElement, fsElement);
 
     // Remove fsElement now that image is loaded
     fsElement.remove();
 
+    cleanup();
+
     return {success: true, tempUrl: tempUrl};
+  }
+
+  createVideoElement(url, fsid, type) {
+    let video = document.createElement("video");
+    video.setAttribute('controls', true);
+    video.setAttribute('fsid', fsid);
+    video.setAttribute('fscollapsable', true);
+
+    let source = document.createElement("source");
+    source.setAttribute('src', url);
+    source.setAttribute('type', type);
+
+    video.append(source);
+    return video;
+  }
+
+  createAudioElement(url, fsid) {
+    let audio = document.createElement("audio");
+    audio.setAttribute('src', url);
+    audio.setAttribute('controls', true);
+    audio.setAttribute('fsid', fsid);
+    audio.setAttribute('fscollapsable', true);
+
+    return audio;
   }
 
   createImageElement(url, fsid) {
@@ -79,18 +151,20 @@ export default class FileLoader {
     return image;
   }
 
-  setStatus(status, fsElement) {
-    if(this.statusElement) {
-      this.statusElement.remove();
+  setStatus(status, fsElement, uuid) {
+    let existingStatusElement = this.statusElementMapping[uuid];
+    if(existingStatusElement) {
+      existingStatusElement.remove();
     }
 
     if(status) {
-      this.statusElement = document.createElement('p');
-      this.statusElement.setAttribute('ghost', 'true');
-      this.statusElement.setAttribute('contenteditable', false);
-      this.statusElement.setAttribute('style', 'font-weight: bold');
-      this.statusElement.textContent = status;
-      this.insertElementAdjacent(this.statusElement, fsElement);
+      let element = document.createElement('p');
+      element.setAttribute('ghost', 'true');
+      element.setAttribute('contenteditable', false);
+      element.setAttribute('style', 'font-weight: bold');
+      element.textContent = status;
+      this.insertElementAdjacent(element, fsElement);
+      this.statusElementMapping[uuid] = element;
     }
   }
 

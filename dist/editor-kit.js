@@ -1247,13 +1247,31 @@ function () {
     this.filesafe = filesafe;
     this.getElementsBySelector = getElementsBySelector;
     this.insertElement = insertElement;
+    this.currentlyLoadingIds = [];
+    this.statusElementMapping = {};
+    this.fileTypeToElementType = {
+      "image/png": "img",
+      "image/jpg": "img",
+      "image/jpeg": "img",
+      "image/gif": "img",
+      "image/tiff": "img",
+      "image/bmp": "img",
+      "video/mp4": "video",
+      "audio/mpeg": "audio",
+      "audio/mp3": "audio"
+    };
   }
-  /*
-    Scans the document for elements <filesafe>. If found, begins loading file.
-  */
-
 
   _createClass(FileLoader, [{
+    key: "fileTypeForElementType",
+    value: function fileTypeForElementType(type) {
+      return this.fileTypeToElementType[type.toLowerCase()];
+    }
+    /*
+      Scans the document for elements <filesafe>. If found, begins loading file.
+    */
+
+  }, {
     key: "loadFilesafeElements",
     value: function loadFilesafeElements() {
       var elements = this.getElementsBySelector("p[fscollapsable]");
@@ -1292,30 +1310,43 @@ function () {
       var _loadFilesafeElement = _asyncToGenerator(
       /*#__PURE__*/
       regeneratorRuntime.mark(function _callee(fsElement) {
-        var uuid, descriptor, selectorSyntax, existingElements, fileItem, data, tempUrl, imageElement;
+        var _this = this;
+
+        var uuid, descriptor, selectorSyntax, existingElements, cleanup, fileItem, data, fileType, tempUrl, elementType, mediaElement;
         return regeneratorRuntime.wrap(function _callee$(_context) {
           while (1) {
             switch (_context.prev = _context.next) {
               case 0:
                 uuid = fsElement.getAttribute("fsid");
-                descriptor = this.filesafe.findFileDescriptor(uuid);
 
-                if (descriptor) {
-                  _context.next = 5;
+                if (!this.currentlyLoadingIds.includes(uuid)) {
+                  _context.next = 4;
                   break;
                 }
 
+                console.log("Already loading file, returning");
+                return _context.abrupt("return");
+
+              case 4:
+                descriptor = this.filesafe.findFileDescriptor(uuid);
+
+                if (descriptor) {
+                  _context.next = 9;
+                  break;
+                }
+
+                this.setStatus("Unable to find file.", fsElement, uuid);
                 console.log("Can't find descriptor with id", uuid);
                 return _context.abrupt("return", {
                   success: false
                 });
 
-              case 5:
+              case 9:
                 selectorSyntax = "[fsid=\"".concat(descriptor.uuid, "\"][fscollapsable]");
                 existingElements = document.querySelectorAll("img".concat(selectorSyntax, ", figure").concat(selectorSyntax, ", video").concat(selectorSyntax, ", audioimg").concat(selectorSyntax));
 
                 if (!(existingElements.length > 0)) {
-                  _context.next = 10;
+                  _context.next = 14;
                   break;
                 }
 
@@ -1324,52 +1355,96 @@ function () {
                   success: false
                 });
 
-              case 10:
-                this.setStatus("Downloading file...", fsElement);
-                _context.next = 13;
-                return __WEBPACK_IMPORTED_MODULE_0__Util_js__["a" /* default */].sleep(0.05);
+              case 14:
+                cleanup = function cleanup() {
+                  _this.currentlyLoadingIds.splice(_this.currentlyLoadingIds.indexOf(uuid), 1);
+                };
 
-              case 13:
-                _context.next = 15;
-                return this.filesafe.downloadFileFromDescriptor(descriptor);
-
-              case 15:
-                fileItem = _context.sent;
-                this.setStatus("Decrypting file...", fsElement);
+                this.currentlyLoadingIds.push(uuid);
+                this.setStatus("Downloading file...", fsElement, uuid);
                 _context.next = 19;
                 return __WEBPACK_IMPORTED_MODULE_0__Util_js__["a" /* default */].sleep(0.05);
 
               case 19:
                 _context.next = 21;
+                return this.filesafe.downloadFileFromDescriptor(descriptor);
+
+              case 21:
+                fileItem = _context.sent;
+                this.setStatus("Decrypting file...", fsElement, uuid);
+                _context.next = 25;
+                return __WEBPACK_IMPORTED_MODULE_0__Util_js__["a" /* default */].sleep(0.05);
+
+              case 25:
+                _context.next = 27;
                 return this.filesafe.decryptFile({
                   fileDescriptor: descriptor,
                   fileItem: fileItem
                 });
 
-              case 21:
+              case 27:
                 data = _context.sent;
                 // Remove loading text
-                this.setStatus(null, fsElement);
-                _context.next = 25;
+                this.setStatus(null, fsElement, uuid);
+                _context.next = 31;
                 return __WEBPACK_IMPORTED_MODULE_0__Util_js__["a" /* default */].sleep(0.05);
 
-              case 25:
+              case 31:
                 // Allow UI to update before adding image
                 // Generate temporary url, must be released later
+                fileType = descriptor.content.fileType;
                 tempUrl = this.filesafe.createTemporaryFileUrl({
                   base64Data: data.decryptedData,
-                  dataType: descriptor.content.fileType
+                  dataType: fileType
                 });
-                imageElement = this.createImageElement(tempUrl, uuid);
-                this.insertElementAdjacent(imageElement, fsElement); // Remove fsElement now that image is loaded
+                elementType = this.fileTypeForElementType(fileType);
+
+                if (!(elementType == "img")) {
+                  _context.next = 38;
+                  break;
+                }
+
+                mediaElement = this.createImageElement(tempUrl, uuid);
+                _context.next = 49;
+                break;
+
+              case 38:
+                if (!(elementType == "video")) {
+                  _context.next = 42;
+                  break;
+                }
+
+                mediaElement = this.createVideoElement(tempUrl, uuid, fileType);
+                _context.next = 49;
+                break;
+
+              case 42:
+                if (!(elementType == "audio")) {
+                  _context.next = 46;
+                  break;
+                }
+
+                mediaElement = this.createAudioElement(tempUrl, uuid);
+                _context.next = 49;
+                break;
+
+              case 46:
+                // File not supported
+                this.setStatus("File not supported.", fsElement, uuid);
+                cleanup();
+                return _context.abrupt("return");
+
+              case 49:
+                this.insertElementAdjacent(mediaElement, fsElement); // Remove fsElement now that image is loaded
 
                 fsElement.remove();
+                cleanup();
                 return _context.abrupt("return", {
                   success: true,
                   tempUrl: tempUrl
                 });
 
-              case 30:
+              case 53:
               case "end":
                 return _context.stop();
             }
@@ -1383,6 +1458,29 @@ function () {
 
       return loadFilesafeElement;
     }()
+  }, {
+    key: "createVideoElement",
+    value: function createVideoElement(url, fsid, type) {
+      var video = document.createElement("video");
+      video.setAttribute('controls', true);
+      video.setAttribute('fsid', fsid);
+      video.setAttribute('fscollapsable', true);
+      var source = document.createElement("source");
+      source.setAttribute('src', url);
+      source.setAttribute('type', type);
+      video.append(source);
+      return video;
+    }
+  }, {
+    key: "createAudioElement",
+    value: function createAudioElement(url, fsid) {
+      var audio = document.createElement("audio");
+      audio.setAttribute('src', url);
+      audio.setAttribute('controls', true);
+      audio.setAttribute('fsid', fsid);
+      audio.setAttribute('fscollapsable', true);
+      return audio;
+    }
   }, {
     key: "createImageElement",
     value: function createImageElement(url, fsid) {
@@ -1401,18 +1499,21 @@ function () {
     }
   }, {
     key: "setStatus",
-    value: function setStatus(status, fsElement) {
-      if (this.statusElement) {
-        this.statusElement.remove();
+    value: function setStatus(status, fsElement, uuid) {
+      var existingStatusElement = this.statusElementMapping[uuid];
+
+      if (existingStatusElement) {
+        existingStatusElement.remove();
       }
 
       if (status) {
-        this.statusElement = document.createElement('p');
-        this.statusElement.setAttribute('ghost', 'true');
-        this.statusElement.setAttribute('contenteditable', false);
-        this.statusElement.setAttribute('style', 'font-weight: bold');
-        this.statusElement.textContent = status;
-        this.insertElementAdjacent(this.statusElement, fsElement);
+        var element = document.createElement('p');
+        element.setAttribute('ghost', 'true');
+        element.setAttribute('contenteditable', false);
+        element.setAttribute('style', 'font-weight: bold');
+        element.textContent = status;
+        this.insertElementAdjacent(element, fsElement);
+        this.statusElementMapping[uuid] = element;
       }
     }
   }, {
