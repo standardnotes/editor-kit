@@ -29,7 +29,7 @@ export default class FilesafeHtml {
     let uuid = components[1];
     // We use a p tag here because if try something custom, like `filesafe` tag, the editor will automatically
     // wrap it in a p tag, causing littered p tags remaining in the plaintext representation.
-    let result = `<p fscollapsable=true ghost=true fsid=${uuid}></p>`;
+    let result = `<p style='display: none;' fscollapsable=true ghost=true fsid=${uuid}></p>`;
     return result;
   }
 

@@ -46,7 +46,7 @@ class EditorKit {
     Returns a file descriptor if successful.
    */
   async uploadJSFileObject(file) {
-    return this.internal.encryptAndUploadJavaScriptFileObject(file);
+    return this.internal.uploadJSFileObject(file);
   }
 }
 

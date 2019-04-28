@@ -2,9 +2,10 @@ import Util from "./Util.js";
 
 export default class FileLoader {
 
-  constructor({filesafe, getElementsBySelector}) {
+  constructor({filesafe, getElementsBySelector, insertElement}) {
     this.filesafe = filesafe;
     this.getElementsBySelector = getElementsBySelector;
+    this.insertElement = insertElement;
   }
 
   /*
@@ -84,18 +85,20 @@ export default class FileLoader {
     }
 
     if(status) {
-      this.statusElement = document.createElement('strong');
+      this.statusElement = document.createElement('p');
       this.statusElement.setAttribute('ghost', 'true');
       this.statusElement.setAttribute('contenteditable', false);
+      this.statusElement.setAttribute('style', 'font-weight: bold');
       this.statusElement.textContent = status;
       this.insertElementAdjacent(this.statusElement, fsElement);
     }
   }
 
   insertElementAdjacent(domNodeToInsert, adjacentToElement) {
-    let element = domNodeToInsert;
-    adjacentToElement.after(element);
+    // let element = domNodeToInsert;
+    // adjacentToElement.after(element);
     // adjacentTo.insertAdjacentElement('beforebegin', insertElement);
+    this.insertElement(domNodeToInsert, adjacentToElement);
   }
 
 }

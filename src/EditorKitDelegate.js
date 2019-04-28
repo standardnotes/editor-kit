@@ -14,13 +14,14 @@ export default class EditorKitDelegate {
 
   constructor({insertRawText, onReceiveNote,
     setEditorRawText, getCurrentLineText, replaceText,
-    getElementsBySelector}) {
+    getElementsBySelector, insertElement}) {
     this.insertRawText = insertRawText;
     this.onReceiveNote = onReceiveNote;
     this.setEditorRawText = setEditorRawText;
     this.getCurrentLineText = getCurrentLineText;
     this.replaceText = replaceText;
     this.getElementsBySelector = getElementsBySelector;
+    this.insertElement = insertElement;
   }
 
 }

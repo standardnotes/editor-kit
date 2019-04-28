@@ -59,6 +59,10 @@ export default class EditorKit {
           this.textExpander.searchPatterns()
         }
       }
+
+      if(allFileDescriptors.length > 0) {
+        this.fileLoader.loadFilesafeElements();
+      }
     });
 
     this.filesafe.addNewFileDescriptorHandler((fileDescriptor) => {
@@ -70,7 +74,8 @@ export default class EditorKit {
 
     this.fileLoader = new FileLoader({
       filesafe: this.filesafe,
-      getElementsBySelector: this.delegate.getElementsBySelector
+      getElementsBySelector: this.delegate.getElementsBySelector,
+      insertElement: this.delegate.insertElement
     });
 
     this.textExpander = new TextExpander({
@@ -138,7 +143,7 @@ export default class EditorKit {
       // after being collapsed, will not change. So we'll compare the previous html to new collapsed html before continuing
       let sameText = this.previousText == text;
       if(sameText) {
-        console.log("Changed html is same as previous, ignoring");
+        // console.log("Changed html is same as previous, ignoring");
         return;
       }
     }

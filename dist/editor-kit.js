@@ -222,7 +222,7 @@ function () {
           while (1) {
             switch (_context.prev = _context.next) {
               case 0:
-                return _context.abrupt("return", this.internal.encryptAndUploadJavaScriptFileObject(file));
+                return _context.abrupt("return", this.internal.uploadJSFileObject(file));
 
               case 1:
               case "end":
@@ -374,6 +374,10 @@ function () {
             _this.textExpander.searchPatterns();
           }
         }
+
+        if (allFileDescriptors.length > 0) {
+          _this.fileLoader.loadFilesafeElements();
+        }
       });
       this.filesafe.addNewFileDescriptorHandler(function (fileDescriptor) {
         // Called when a new file is uploaded. We'll wait until the bridge acknowledges
@@ -384,7 +388,8 @@ function () {
       });
       this.fileLoader = new __WEBPACK_IMPORTED_MODULE_3__FileLoader_js__["a" /* default */]({
         filesafe: this.filesafe,
-        getElementsBySelector: this.delegate.getElementsBySelector
+        getElementsBySelector: this.delegate.getElementsBySelector,
+        insertElement: this.delegate.insertElement
       });
       this.textExpander = new __WEBPACK_IMPORTED_MODULE_4__TextExpander_js__["a" /* default */]({
         afterExpand: function afterExpand() {
@@ -463,7 +468,7 @@ function () {
         var sameText = this.previousText == text;
 
         if (sameText) {
-          console.log("Changed html is same as previous, ignoring");
+          // console.log("Changed html is same as previous, ignoring");
           return;
         }
       }
@@ -1234,12 +1239,14 @@ var FileLoader =
 function () {
   function FileLoader(_ref) {
     var filesafe = _ref.filesafe,
-        getElementsBySelector = _ref.getElementsBySelector;
+        getElementsBySelector = _ref.getElementsBySelector,
+        insertElement = _ref.insertElement;
 
     _classCallCheck(this, FileLoader);
 
     this.filesafe = filesafe;
     this.getElementsBySelector = getElementsBySelector;
+    this.insertElement = insertElement;
   }
   /*
     Scans the document for elements <filesafe>. If found, begins loading file.
@@ -1400,9 +1407,10 @@ function () {
       }
 
       if (status) {
-        this.statusElement = document.createElement('strong');
+        this.statusElement = document.createElement('p');
         this.statusElement.setAttribute('ghost', 'true');
         this.statusElement.setAttribute('contenteditable', false);
+        this.statusElement.setAttribute('style', 'font-weight: bold');
         this.statusElement.textContent = status;
         this.insertElementAdjacent(this.statusElement, fsElement);
       }
@@ -1410,8 +1418,10 @@ function () {
   }, {
     key: "insertElementAdjacent",
     value: function insertElementAdjacent(domNodeToInsert, adjacentToElement) {
-      var element = domNodeToInsert;
-      adjacentToElement.after(element); // adjacentTo.insertAdjacentElement('beforebegin', insertElement);
+      // let element = domNodeToInsert;
+      // adjacentToElement.after(element);
+      // adjacentTo.insertAdjacentElement('beforebegin', insertElement);
+      this.insertElement(domNodeToInsert, adjacentToElement);
     }
   }]);
 
@@ -1575,7 +1585,7 @@ function () {
       var uuid = components[1]; // We use a p tag here because if try something custom, like `filesafe` tag, the editor will automatically
       // wrap it in a p tag, causing littered p tags remaining in the plaintext representation.
 
-      var result = "<p fscollapsable=true ghost=true fsid=".concat(uuid, "></p>");
+      var result = "<p style='display: none;' fscollapsable=true ghost=true fsid=".concat(uuid, "></p>");
       return result;
     }
     /*
@@ -1655,7 +1665,8 @@ var EditorKitDelegate = function EditorKitDelegate(_ref) {
       setEditorRawText = _ref.setEditorRawText,
       getCurrentLineText = _ref.getCurrentLineText,
       replaceText = _ref.replaceText,
-      getElementsBySelector = _ref.getElementsBySelector;
+      getElementsBySelector = _ref.getElementsBySelector,
+      insertElement = _ref.insertElement;
 
   _classCallCheck(this, EditorKitDelegate);
 
@@ -1665,6 +1676,7 @@ var EditorKitDelegate = function EditorKitDelegate(_ref) {
   this.getCurrentLineText = getCurrentLineText;
   this.replaceText = replaceText;
   this.getElementsBySelector = getElementsBySelector;
+  this.insertElement = insertElement;
 };
 
 
