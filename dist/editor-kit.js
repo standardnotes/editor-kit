@@ -180,9 +180,30 @@ function () {
 
   _createClass(EditorKit, [{
     key: "getFilesafe",
-    value: function getFilesafe() {
-      return this.internal.filesafe;
-    }
+    value: function () {
+      var _getFilesafe = _asyncToGenerator(
+      /*#__PURE__*/
+      regeneratorRuntime.mark(function _callee() {
+        return regeneratorRuntime.wrap(function _callee$(_context) {
+          while (1) {
+            switch (_context.prev = _context.next) {
+              case 0:
+                return _context.abrupt("return", this.internal.getFilesafe());
+
+              case 1:
+              case "end":
+                return _context.stop();
+            }
+          }
+        }, _callee, this);
+      }));
+
+      function getFilesafe() {
+        return _getFilesafe.apply(this, arguments);
+      }
+
+      return getFilesafe;
+    }()
     /*
       Called by consumer when the editor has a change/input event
     */
@@ -217,19 +238,19 @@ function () {
     value: function () {
       var _uploadJSFileObject = _asyncToGenerator(
       /*#__PURE__*/
-      regeneratorRuntime.mark(function _callee(file) {
-        return regeneratorRuntime.wrap(function _callee$(_context) {
+      regeneratorRuntime.mark(function _callee2(file) {
+        return regeneratorRuntime.wrap(function _callee2$(_context2) {
           while (1) {
-            switch (_context.prev = _context.next) {
+            switch (_context2.prev = _context2.next) {
               case 0:
-                return _context.abrupt("return", this.internal.uploadJSFileObject(file));
+                return _context2.abrupt("return", this.internal.uploadJSFileObject(file));
 
               case 1:
               case "end":
-                return _context.stop();
+                return _context2.stop();
             }
           }
-        }, _callee, this);
+        }, _callee2, this);
       }));
 
       function uploadJSFileObject(_x) {
@@ -277,8 +298,6 @@ var EditorKit =
 /*#__PURE__*/
 function () {
   function EditorKit(_ref) {
-    var _this = this;
-
     var delegate = _ref.delegate,
         mode = _ref.mode,
         supportsFilesafe = _ref.supportsFilesafe,
@@ -306,19 +325,93 @@ function () {
     // Note that filesafe-js is set as an "external" in webpack.config, so it is not included in the EditorKit bundle
 
     if (supportsFilesafe) {
-      new Promise(function(resolve) { resolve(); }).then(__webpack_require__.bind(null, 7)).then(function (result) {
-        _this.FilesafeClass = result["default"];
-
-        _this.configureFilesafe();
-      });
+      this.filesafeImportPromise = this.importFilesafe();
     }
   }
 
   _createClass(EditorKit, [{
+    key: "importFilesafe",
+    value: function () {
+      var _importFilesafe = _asyncToGenerator(
+      /*#__PURE__*/
+      regeneratorRuntime.mark(function _callee() {
+        var _this = this;
+
+        return regeneratorRuntime.wrap(function _callee$(_context) {
+          while (1) {
+            switch (_context.prev = _context.next) {
+              case 0:
+                return _context.abrupt("return", new Promise(function(resolve) { resolve(); }).then(__webpack_require__.bind(null, 7)).then(function (result) {
+                  _this.FilesafeClass = result["default"];
+
+                  _this.configureFilesafe();
+
+                  return _this.filesafe;
+                }));
+
+              case 1:
+              case "end":
+                return _context.stop();
+            }
+          }
+        }, _callee);
+      }));
+
+      function importFilesafe() {
+        return _importFilesafe.apply(this, arguments);
+      }
+
+      return importFilesafe;
+    }()
+  }, {
+    key: "getFilesafe",
+    value: function () {
+      var _getFilesafe = _asyncToGenerator(
+      /*#__PURE__*/
+      regeneratorRuntime.mark(function _callee2() {
+        return regeneratorRuntime.wrap(function _callee2$(_context2) {
+          while (1) {
+            switch (_context2.prev = _context2.next) {
+              case 0:
+                if (!(!this.filesafe || this.filesafeImportPromise)) {
+                  _context2.next = 5;
+                  break;
+                }
+
+                if (!this.filesafeImportPromise) {
+                  _context2.next = 3;
+                  break;
+                }
+
+                return _context2.abrupt("return", this.filesafeImportPromise);
+
+              case 3:
+                _context2.next = 6;
+                break;
+
+              case 5:
+                return _context2.abrupt("return", this.importFilesafe());
+
+              case 6:
+              case "end":
+                return _context2.stop();
+            }
+          }
+        }, _callee2, this);
+      }));
+
+      function getFilesafe() {
+        return _getFilesafe.apply(this, arguments);
+      }
+
+      return getFilesafe;
+    }()
+  }, {
     key: "configureFilesafe",
     value: function configureFilesafe() {
       var _this2 = this;
 
+      console.log("editor-kit | configuring filesafe");
       this.filesafe = new this.FilesafeClass({
         componentManager: this.componentManager
       });
@@ -394,7 +487,8 @@ function () {
       this.fileLoader = new __WEBPACK_IMPORTED_MODULE_2__FileLoader_js__["a" /* default */]({
         filesafe: this.filesafe,
         getElementsBySelector: this.delegate.getElementsBySelector,
-        insertElement: this.delegate.insertElement
+        insertElement: this.delegate.insertElement,
+        preprocessElement: this.delegate.preprocessElement
       });
       this.textExpander = new __WEBPACK_IMPORTED_MODULE_3__TextExpander_js__["a" /* default */]({
         afterExpand: function afterExpand() {
@@ -515,25 +609,25 @@ function () {
     value: function () {
       var _uploadJSFileObject = _asyncToGenerator(
       /*#__PURE__*/
-      regeneratorRuntime.mark(function _callee(file) {
+      regeneratorRuntime.mark(function _callee3(file) {
         var _this5 = this;
 
         var status;
-        return regeneratorRuntime.wrap(function _callee$(_context) {
+        return regeneratorRuntime.wrap(function _callee3$(_context3) {
           while (1) {
-            switch (_context.prev = _context.next) {
+            switch (_context3.prev = _context3.next) {
               case 0:
                 status = this.fileLoader.insertStatusAtCursor("Processing file...");
-                return _context.abrupt("return", this.filesafe.encryptAndUploadJavaScriptFileObject(file).then(function (descriptor) {
+                return _context3.abrupt("return", this.filesafe.encryptAndUploadJavaScriptFileObject(file).then(function (descriptor) {
                   _this5.fileLoader.removeCursorStatus(status);
                 }));
 
               case 2:
               case "end":
-                return _context.stop();
+                return _context3.stop();
             }
           }
-        }, _callee, this);
+        }, _callee3, this);
       }));
 
       function uploadJSFileObject(_x) {
@@ -1262,13 +1356,15 @@ function () {
   function FileLoader(_ref) {
     var filesafe = _ref.filesafe,
         getElementsBySelector = _ref.getElementsBySelector,
+        preprocessElement = _ref.preprocessElement,
         insertElement = _ref.insertElement;
 
     _classCallCheck(this, FileLoader);
 
     this.filesafe = filesafe;
     this.getElementsBySelector = getElementsBySelector;
-    this.insertElement = insertElement; // When a file is decrypted and loaded into a temp url, we'll place the temp url in here so that subsequent decrypt attempts
+    this.insertElement = insertElement;
+    this.preprocessElement = preprocessElement; // When a file is decrypted and loaded into a temp url, we'll place the temp url in here so that subsequent decrypt attempts
     // dont require further work. Mapped values are of form {url, fileType, fsname}
 
     this.uuidToFileTempUrlAndTypeMapping = {}; // uuids of files currently loading, so that we don't start a new load for currently loading file
@@ -1410,29 +1506,55 @@ function () {
 
               case 23:
                 _context.next = 25;
-                return this.filesafe.downloadFileFromDescriptor(descriptor);
+                return this.filesafe.downloadFileFromDescriptor(descriptor)["catch"](function (downloadError) {
+                  _this.setStatus("Unable to download file.", fsElement, fsid);
+
+                  return;
+                });
 
               case 25:
                 fileItem = _context.sent;
+
+                if (fileItem) {
+                  _context.next = 28;
+                  break;
+                }
+
+                return _context.abrupt("return");
+
+              case 28:
                 this.setStatus("Decrypting file...", fsElement, fsid);
-                _context.next = 29;
+                _context.next = 31;
                 return __WEBPACK_IMPORTED_MODULE_0__Util_js__["a" /* default */].sleep(0.05);
 
-              case 29:
-                _context.next = 31;
+              case 31:
+                _context.next = 33;
                 return this.filesafe.decryptFile({
                   fileDescriptor: descriptor,
                   fileItem: fileItem
+                })["catch"](function (decryptError) {
+                  _this.setStatus("Unable to decrypt file.", fsElement, fsid);
+
+                  return;
                 });
 
-              case 31:
+              case 33:
                 data = _context.sent;
+
+                if (data) {
+                  _context.next = 36;
+                  break;
+                }
+
+                return _context.abrupt("return");
+
+              case 36:
                 // Remove loading text
                 this.setStatus(null, fsElement, fsid);
-                _context.next = 35;
+                _context.next = 39;
                 return __WEBPACK_IMPORTED_MODULE_0__Util_js__["a" /* default */].sleep(0.05);
 
-              case 35:
+              case 39:
                 // Allow UI to update before adding image
                 // Generate temporary url, must be released later
                 fileType = descriptor.content.fileType;
@@ -1457,7 +1579,7 @@ function () {
                   success: true
                 });
 
-              case 41:
+              case 45:
               case "end":
                 return _context.stop();
             }
@@ -1486,14 +1608,16 @@ function () {
         mediaElement = this.createImageElement({
           url: url,
           fsid: fsid,
-          fsname: fsname
+          fsname: fsname,
+          fsElement: fsElement
         });
       } else if (elementType == "video") {
         mediaElement = this.createVideoElement({
           url: url,
           fsid: fsid,
           fileType: fileType,
-          fsname: fsname
+          fsname: fsname,
+          fsElement: fsElement
         });
       } else if (elementType == "audio") {
         mediaElement = this.createAudioElement({
@@ -1512,57 +1636,96 @@ function () {
       fsElement.remove();
       return true;
     }
+    /*
+      The below applies to img tags, but not video and audio tags. So we use this for video and audio elements only.
+      Redactor automatically includes figure elements for image, as part of this.preprocessElement
+      We'd like to wrap it in a figure ideally, but right now there is a bug where inserting
+      the figure element programatically, then entering to create new line after the figure,
+      inserts the paragraph text inside the figure element. We ignore this figure element
+      on saving to SN, so this text would be lost.
+     */
+
+  }, {
+    key: "wrapElementInFigure",
+    value: function wrapElementInFigure(_ref3) {
+      var element = _ref3.element,
+          fsid = _ref3.fsid,
+          fsname = _ref3.fsname;
+      var figure = document.createElement('figure');
+      figure.setAttribute('fsid', fsid);
+      figure.setAttribute('fsname', fsname);
+      figure.setAttribute('fscollapsable', true);
+      figure.append(element);
+      return figure;
+    }
+  }, {
+    key: "createImageElement",
+    value: function createImageElement(_ref4) {
+      var url = _ref4.url,
+          fsid = _ref4.fsid,
+          fsname = _ref4.fsname,
+          fsElement = _ref4.fsElement;
+      var image = document.createElement("img");
+      image.setAttribute('src', url);
+      image.setAttribute('srcset', "".concat(url, " 2x"));
+      image.setAttribute('fsid', fsid);
+      image.setAttribute('fsname', fsname);
+      image.setAttribute('fscollapsable', true);
+
+      if (fsElement.getAttribute("width")) {
+        image.setAttribute("width", fsElement.getAttribute("width"));
+        image.setAttribute("height", fsElement.getAttribute("height"));
+      }
+
+      return image;
+    }
   }, {
     key: "createVideoElement",
-    value: function createVideoElement(_ref3) {
-      var url = _ref3.url,
-          fsid = _ref3.fsid,
-          type = _ref3.type,
-          fsname = _ref3.fsname;
+    value: function createVideoElement(_ref5) {
+      var url = _ref5.url,
+          fsid = _ref5.fsid,
+          fileType = _ref5.fileType,
+          fsname = _ref5.fsname,
+          fsElement = _ref5.fsElement;
       var video = document.createElement("video");
       video.setAttribute('controls', true);
       video.setAttribute('fsid', fsid);
       video.setAttribute('fsname', fsname);
       video.setAttribute('fscollapsable', true);
+
+      if (fsElement.getAttribute("width")) {
+        video.setAttribute("width", fsElement.getAttribute("width"));
+        video.setAttribute("height", fsElement.getAttribute("height"));
+      }
+
       var source = document.createElement("source");
       source.setAttribute('src', url);
-      source.setAttribute('type', type);
+      source.setAttribute('type', fileType);
       video.append(source);
-      return video;
+      return this.wrapElementInFigure({
+        element: video,
+        fsid: fsid,
+        fsname: fsname
+      });
     }
   }, {
     key: "createAudioElement",
-    value: function createAudioElement(_ref4) {
-      var url = _ref4.url,
-          fsid = _ref4.fsid,
-          fsname = _ref4.fsname;
+    value: function createAudioElement(_ref6) {
+      var url = _ref6.url,
+          fsid = _ref6.fsid,
+          fsname = _ref6.fsname;
       var audio = document.createElement("audio");
       audio.setAttribute('src', url);
       audio.setAttribute('controls', true);
       audio.setAttribute('fsid', fsid);
       audio.setAttribute('fsname', fsname);
       audio.setAttribute('fscollapsable', true);
-      return audio;
-    }
-  }, {
-    key: "createImageElement",
-    value: function createImageElement(_ref5) {
-      var url = _ref5.url,
-          fsid = _ref5.fsid,
-          fsname = _ref5.fsname;
-      var image = document.createElement("img");
-      image.setAttribute('src', url);
-      image.setAttribute('srcset', "".concat(url, " 2x")); // We'd like to wrap it in a figure ideally, but right now there is a bug where inserting
-      // the figure element programatically, then entering to create new line after the figure,
-      // inserts the paragraph text inside the figure element. We ignore this figure element
-      // on saving to SN, so this text would be lost.
-      // let imageContainer = document.createElement('figure');
-
-      image.setAttribute('fsid', fsid);
-      image.setAttribute('fsname', fsname);
-      image.setAttribute('fscollapsable', true); // imageContainer.append(image);
-
-      return image;
+      return this.wrapElementInFigure({
+        element: audio,
+        fsid: fsid,
+        fsname: fsname
+      });
+      ;
     }
   }, {
     key: "setStatus",
@@ -1583,7 +1746,7 @@ function () {
         element.setAttribute('contenteditable', false);
         element.setAttribute('style', 'font-weight: bold');
         element.textContent = status;
-        this.insertElementAdjacent(element, fsElement);
+        element = this.insertElementAdjacent(element, fsElement);
 
         if (fsid) {
           this.statusElementMapping[fsid] = element;
@@ -1613,8 +1776,9 @@ function () {
   }, {
     key: "insertElementAdjacent",
     value: function insertElementAdjacent(domNodeToInsert, adjacentToElement) {
-      // adjacentTo.insertAdjacentElement('beforebegin', insertElement);
-      this.insertElement(domNodeToInsert, adjacentToElement);
+      var processedElement = this.preprocessElement(domNodeToInsert);
+      this.insertElement(processedElement, adjacentToElement);
+      return processedElement;
     }
   }]);
 
@@ -1794,10 +1958,18 @@ function () {
       syntax = syntax.replace("[", "").replace("]", "");
       var components = syntax.split(":");
       var uuid = components[1];
-      var name = components[2]; // We use a p tag here because if try something custom, like `filesafe` tag, the editor will automatically
+      var name = components[2];
+      var size = components[3];
+      var sizeString = "";
+
+      if (size) {
+        var dimensions = size.split("x");
+        sizeString = "width=".concat(dimensions[0], " height=").concat(dimensions[1]);
+      } // We use a p tag here because if try something custom, like `filesafe` tag, the editor will automatically
       // wrap it in a p tag, causing littered p tags remaining in the plaintext representation.
 
-      var result = "<span fsplaceholder=true style='display: none;' fscollapsable=true ghost=true fsid=".concat(uuid, " fsname=").concat(name, "></span>");
+
+      var result = "<span fsplaceholder=true style='display: none;' fscollapsable=true ghost=true fsid=".concat(uuid, " fsname=").concat(name, " ").concat(sizeString, "></span>");
       return result;
     }
     /*
@@ -1811,17 +1983,31 @@ function () {
       var domCopy = new DOMParser().parseFromString(html, "text/html"); // Elements that have fscollapsable means they should be collapsed to plain syntax
 
       var mediaElements = domCopy.querySelectorAll("*[fscollapsable]");
+      /*
+       Some editors (Redactor) may arbitrarily wrap elements inside a <p> tag before inserting into dom
+       Then, when we collapse all the elements, and when the ghosts are removed, we find an emtpy <p> tag
+       just sitting around. We want to find these candidates by scanning for all p tags, checking to see how many ghosts it has,
+       and if the number of ghosts matches its number of children, we know that after everything is collapsed, this p tag will most
+       likely be empty. However, if we replace an element with its collapsed syntax, it will not be empty.
+       So items placed in pTagsToRemoveCandidates are just candidates. We'll check again after we do all collapsing
+       and ghost removing, and if it has 0 children and its innerHTML length == 0, we'll remove it
+      */
+
+      var pTags = domCopy.querySelectorAll("p");
+      var pTagsToRemoveCandidates = [];
       var _iteratorNormalCompletion = true;
       var _didIteratorError = false;
       var _iteratorError = undefined;
 
       try {
-        for (var _iterator = mediaElements[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
-          var file = _step.value;
-          var uuid = file.getAttribute('fsid');
-          var name = file.getAttribute('fsname');
-          file.insertAdjacentText('afterend', "[FileSafe:".concat(uuid, ":").concat(name, "]"));
-          file.remove();
+        for (var _iterator = pTags[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+          var pTag = _step.value;
+          var numGhosts = pTag.querySelectorAll("[ghost]").length;
+          var numChildren = pTag.children.length;
+
+          if (numChildren == numGhosts) {
+            pTagsToRemoveCandidates.push(pTag);
+          }
         }
       } catch (err) {
         _didIteratorError = true;
@@ -1838,11 +2024,55 @@ function () {
         }
       }
 
+      var _iteratorNormalCompletion2 = true;
+      var _didIteratorError2 = false;
+      var _iteratorError2 = undefined;
+
+      try {
+        for (var _iterator2 = mediaElements[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
+          var file = _step2.value;
+          var uuid = file.getAttribute('fsid');
+          var name = file.getAttribute('fsname');
+          var width = file.getAttribute('width');
+          var height = file.getAttribute('height');
+          var components = ["FileSafe", uuid, name];
+
+          if (width || height) {
+            var size = "".concat(width, "x").concat(height);
+            components.push(size);
+          }
+
+          var fsSyntax = "[".concat(components.join(":"), "]");
+          file.insertAdjacentText('afterend', fsSyntax);
+          file.remove();
+        }
+      } catch (err) {
+        _didIteratorError2 = true;
+        _iteratorError2 = err;
+      } finally {
+        try {
+          if (!_iteratorNormalCompletion2 && _iterator2["return"] != null) {
+            _iterator2["return"]();
+          }
+        } finally {
+          if (_didIteratorError2) {
+            throw _iteratorError2;
+          }
+        }
+      }
+
       var ghosts = domCopy.querySelectorAll("*[ghost]");
       ghosts.forEach(function (ghost) {
-        return ghost.remove();
+        ghost.remove();
       });
-      return domCopy.body.innerHTML;
+      pTagsToRemoveCandidates.forEach(function (pTag) {
+        // Make sure children count is still 0
+        if (pTag.children.length == 0 && pTag.innerHTML.trim().length == 0) {
+          pTag.remove();
+        }
+      });
+      var result = domCopy.body.innerHTML;
+      return result;
     }
   }]);
 
@@ -1887,6 +2117,7 @@ var EditorKitDelegate = function EditorKitDelegate(_ref) {
       replaceText = _ref.replaceText,
       getElementsBySelector = _ref.getElementsBySelector,
       insertElement = _ref.insertElement,
+      preprocessElement = _ref.preprocessElement,
       clearUndoHistory = _ref.clearUndoHistory;
 
   _classCallCheck(this, EditorKitDelegate);
@@ -1899,6 +2130,7 @@ var EditorKitDelegate = function EditorKitDelegate(_ref) {
   this.replaceText = replaceText;
   this.getElementsBySelector = getElementsBySelector;
   this.insertElement = insertElement;
+  this.preprocessElement = preprocessElement;
   this.clearUndoHistory = clearUndoHistory;
 };
 

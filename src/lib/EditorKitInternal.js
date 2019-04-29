@@ -29,14 +29,30 @@ export default class EditorKit {
     // Consumers who do want FileSafe support must include filesafe-js in their own package.json
     // Note that filesafe-js is set as an "external" in webpack.config, so it is not included in the EditorKit bundle
     if(supportsFilesafe) {
-      import("filesafe-js").then((result) => {
-        this.FilesafeClass = result.default;
-        this.configureFilesafe();
-      })
+      this.filesafeImportPromise = this.importFilesafe();
+    }
+  }
+
+  async importFilesafe() {
+    return import("filesafe-js").then((result) => {
+      this.FilesafeClass = result.default;
+      this.configureFilesafe();
+      return this.filesafe;
+    });
+  }
+
+  async getFilesafe() {
+    if(!this.filesafe || this.filesafeImportPromise) {
+      if(this.filesafeImportPromise) {
+        return this.filesafeImportPromise;
+      }
+    } else {
+      return this.importFilesafe();
     }
   }
 
   configureFilesafe() {
+    console.log("editor-kit | configuring filesafe");
     this.filesafe = new this.FilesafeClass({componentManager: this.componentManager});
 
     this.filesafe.addDataChangeObserver(() => {
@@ -81,7 +97,8 @@ export default class EditorKit {
     this.fileLoader = new FileLoader({
       filesafe: this.filesafe,
       getElementsBySelector: this.delegate.getElementsBySelector,
-      insertElement: this.delegate.insertElement
+      insertElement: this.delegate.insertElement,
+      preprocessElement: this.delegate.preprocessElement
     });
 
     this.textExpander = new TextExpander({

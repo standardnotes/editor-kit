@@ -28,9 +28,15 @@ export default class FilesafeHtml {
     let components = syntax.split(":");
     let uuid = components[1];
     let name = components[2];
+    let size = components[3];
+    let sizeString = "";
+    if(size)  {
+      let dimensions = size.split("x");
+      sizeString = `width=${dimensions[0]} height=${dimensions[1]}`
+    }
     // We use a p tag here because if try something custom, like `filesafe` tag, the editor will automatically
     // wrap it in a p tag, causing littered p tags remaining in the plaintext representation.
-    let result = `<span fsplaceholder=true style='display: none;' fscollapsable=true ghost=true fsid=${uuid} fsname=${name}></span>`;
+    let result = `<span fsplaceholder=true style='display: none;' fscollapsable=true ghost=true fsid=${uuid} fsname=${name} ${sizeString}></span>`;
     return result;
   }
 
@@ -42,16 +48,54 @@ export default class FilesafeHtml {
     let domCopy = new DOMParser().parseFromString(html, "text/html");
     // Elements that have fscollapsable means they should be collapsed to plain syntax
     let mediaElements = domCopy.querySelectorAll(`*[fscollapsable]`);
+
+    /*
+     Some editors (Redactor) may arbitrarily wrap elements inside a <p> tag before inserting into dom
+     Then, when we collapse all the elements, and when the ghosts are removed, we find an emtpy <p> tag
+     just sitting around. We want to find these candidates by scanning for all p tags, checking to see how many ghosts it has,
+     and if the number of ghosts matches its number of children, we know that after everything is collapsed, this p tag will most
+     likely be empty. However, if we replace an element with its collapsed syntax, it will not be empty.
+     So items placed in pTagsToRemoveCandidates are just candidates. We'll check again after we do all collapsing
+     and ghost removing, and if it has 0 children and its innerHTML length == 0, we'll remove it
+    */
+    let pTags = domCopy.querySelectorAll(`p`);
+    let pTagsToRemoveCandidates = [];
+
+    for(let pTag of pTags) {
+      let numGhosts = pTag.querySelectorAll("[ghost]").length;
+      let numChildren = pTag.children.length;
+      if(numChildren == numGhosts)  {
+        pTagsToRemoveCandidates.push(pTag);
+      }
+    }
+
     for(let file of mediaElements) {
       let uuid = file.getAttribute('fsid');
       let name = file.getAttribute('fsname');
-      file.insertAdjacentText('afterend', `[FileSafe:${uuid}:${name}]`);
+      let width = file.getAttribute('width');
+      let height = file.getAttribute('height');
+
+      let components = ["FileSafe", uuid, name];
+      if(width || height) {
+        let size = `${width}x${height}`;
+        components.push(size);
+      }
+
+      let fsSyntax = `[${components.join(":")}]`;
+      file.insertAdjacentText('afterend', fsSyntax);
       file.remove();
     }
 
     let ghosts = domCopy.querySelectorAll(`*[ghost]`);
-    ghosts.forEach((ghost) => ghost.remove());
-    return domCopy.body.innerHTML;
-  }
+    ghosts.forEach((ghost) => {ghost.remove()});
+    pTagsToRemoveCandidates.forEach((pTag) => {
+      // Make sure children count is still 0
+      if(pTag.children.length == 0 && pTag.innerHTML.trim().length == 0) {
+        pTag.remove()
+      }
+    });
 
+    let result = domCopy.body.innerHTML;
+    return result;
+  }
 }

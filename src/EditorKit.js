@@ -24,8 +24,8 @@ class EditorKit {
   Public
   */
 
-  getFilesafe() {
-    return this.internal.filesafe;
+  async getFilesafe() {
+    return this.internal.getFilesafe();
   }
 
   /*

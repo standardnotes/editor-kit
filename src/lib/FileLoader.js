@@ -2,10 +2,11 @@ import Util from "./Util.js";
 
 export default class FileLoader {
 
-  constructor({filesafe, getElementsBySelector, insertElement}) {
+  constructor({filesafe, getElementsBySelector, preprocessElement, insertElement}) {
     this.filesafe = filesafe;
     this.getElementsBySelector = getElementsBySelector;
     this.insertElement = insertElement;
+    this.preprocessElement = preprocessElement;
 
     // When a file is decrypted and loaded into a temp url, we'll place the temp url in here so that subsequent decrypt attempts
     // dont require further work. Mapped values are of form {url, fileType, fsname}
@@ -86,11 +87,25 @@ export default class FileLoader {
 
     this.setStatus("Downloading file...", fsElement, fsid);
     await Util.sleep(0.05); // Allow UI to update before beginning download
-    let fileItem = await this.filesafe.downloadFileFromDescriptor(descriptor);
+    let fileItem = await this.filesafe.downloadFileFromDescriptor(descriptor).catch((downloadError) => {
+      this.setStatus("Unable to download file.", fsElement, fsid);
+      return;
+    })
+
+    if(!fileItem) {
+      return;
+    }
 
     this.setStatus("Decrypting file...", fsElement, fsid);
     await Util.sleep(0.05); // Allow UI to update before beginning decryption
-    let data = await this.filesafe.decryptFile({fileDescriptor: descriptor, fileItem: fileItem})
+    let data = await this.filesafe.decryptFile({fileDescriptor: descriptor, fileItem: fileItem}).catch((decryptError) => {
+      this.setStatus("Unable to decrypt file.", fsElement, fsid);
+      return;
+    });
+
+    if(!data) {
+      return;
+    }
 
     // Remove loading text
     this.setStatus(null, fsElement, fsid);
@@ -114,9 +129,9 @@ export default class FileLoader {
 
     let mediaElement;
     if(elementType == "img") {
-      mediaElement = this.createImageElement({url, fsid, fsname});
+      mediaElement = this.createImageElement({url, fsid, fsname, fsElement});
     } else if(elementType == "video") {
-      mediaElement = this.createVideoElement({url, fsid, fileType, fsname});
+      mediaElement = this.createVideoElement({url, fsid, fileType, fsname, fsElement});
     } else if(elementType == "audio") {
       mediaElement = this.createAudioElement({url, fsid, fsname});
     } else {
@@ -133,19 +148,58 @@ export default class FileLoader {
     return true;
   }
 
-  createVideoElement({url, fsid, type, fsname}) {
+  /*
+    The below applies to img tags, but not video and audio tags. So we use this for video and audio elements only.
+    Redactor automatically includes figure elements for image, as part of this.preprocessElement
+    We'd like to wrap it in a figure ideally, but right now there is a bug where inserting
+    the figure element programatically, then entering to create new line after the figure,
+    inserts the paragraph text inside the figure element. We ignore this figure element
+    on saving to SN, so this text would be lost.
+   */
+  wrapElementInFigure({element, fsid, fsname}) {
+    let figure = document.createElement('figure');
+    figure.setAttribute('fsid', fsid);
+    figure.setAttribute('fsname', fsname);
+    figure.setAttribute('fscollapsable', true);
+    figure.append(element);
+    return figure;
+  }
+
+  createImageElement({url, fsid, fsname, fsElement}) {
+    let image = document.createElement("img");
+    image.setAttribute('src', url);
+    image.setAttribute('srcset', `${url} 2x`);
+
+    image.setAttribute('fsid', fsid);
+    image.setAttribute('fsname', fsname);
+    image.setAttribute('fscollapsable', true);
+
+    if(fsElement.getAttribute("width")) {
+      image.setAttribute("width", fsElement.getAttribute("width"));
+      image.setAttribute("height", fsElement.getAttribute("height"));
+    }
+
+    return image;
+  }
+
+  createVideoElement({url, fsid, fileType, fsname, fsElement}) {
     let video = document.createElement("video");
     video.setAttribute('controls', true);
     video.setAttribute('fsid', fsid);
     video.setAttribute('fsname', fsname);
     video.setAttribute('fscollapsable', true);
 
+    if(fsElement.getAttribute("width")) {
+      video.setAttribute("width", fsElement.getAttribute("width"));
+      video.setAttribute("height", fsElement.getAttribute("height"));
+    }
+
     let source = document.createElement("source");
     source.setAttribute('src', url);
-    source.setAttribute('type', type);
+    source.setAttribute('type', fileType);
 
     video.append(source);
-    return video;
+    return this.wrapElementInFigure({element: video, fsid, fsname});
   }
 
   createAudioElement({url, fsid, fsname}) {
@@ -156,25 +210,7 @@ export default class FileLoader {
     audio.setAttribute('fsname', fsname);
     audio.setAttribute('fscollapsable', true);
 
-    return audio;
-  }
-
-  createImageElement({url, fsid, fsname}) {
-    let image = document.createElement("img");
-    image.setAttribute('src', url);
-    image.setAttribute('srcset', `${url} 2x`);
-
-    // We'd like to wrap it in a figure ideally, but right now there is a bug where inserting
-    // the figure element programatically, then entering to create new line after the figure,
-    // inserts the paragraph text inside the figure element. We ignore this figure element
-    // on saving to SN, so this text would be lost.
-    // let imageContainer = document.createElement('figure');
-    image.setAttribute('fsid', fsid);
-    image.setAttribute('fsname', fsname);
-    image.setAttribute('fscollapsable', true);
-    // imageContainer.append(image);
-
-    return image;
+    return this.wrapElementInFigure({element: audio, fsid, fsname});;
   }
 
   setStatus(status, fsElement, fsid) {
@@ -193,7 +229,7 @@ export default class FileLoader {
       element.setAttribute('contenteditable', false);
       element.setAttribute('style', 'font-weight: bold');
       element.textContent = status;
-      this.insertElementAdjacent(element, fsElement);
+      element = this.insertElementAdjacent(element, fsElement);
       if(fsid) {
         this.statusElementMapping[fsid] = element;
       }
@@ -217,8 +253,9 @@ export default class FileLoader {
   }
 
   insertElementAdjacent(domNodeToInsert, adjacentToElement) {
-    // adjacentTo.insertAdjacentElement('beforebegin', insertElement);
-    this.insertElement(domNodeToInsert, adjacentToElement);
+    let processedElement = this.preprocessElement(domNodeToInsert);
+    this.insertElement(processedElement, adjacentToElement);
+    return processedElement;
   }
 
 }
