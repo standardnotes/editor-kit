@@ -27,9 +27,10 @@ export default class FilesafeHtml {
     syntax = syntax.replace("[", "").replace("]", "");
     let components = syntax.split(":");
     let uuid = components[1];
+    let name = components[2];
     // We use a p tag here because if try something custom, like `filesafe` tag, the editor will automatically
     // wrap it in a p tag, causing littered p tags remaining in the plaintext representation.
-    let result = `<p style='display: none;' fscollapsable=true ghost=true fsid=${uuid}></p>`;
+    let result = `<span fsplaceholder=true style='display: none;' fscollapsable=true ghost=true fsid=${uuid} fsname=${name}></span>`;
     return result;
   }
 
@@ -43,7 +44,8 @@ export default class FilesafeHtml {
     let mediaElements = domCopy.querySelectorAll(`*[fscollapsable]`);
     for(let file of mediaElements) {
       let uuid = file.getAttribute('fsid');
-      file.insertAdjacentText('afterend', `[FileSafe:${uuid}]`);
+      let name = file.getAttribute('fsname');
+      file.insertAdjacentText('afterend', `[FileSafe:${uuid}:${name}]`);
       file.remove();
     }
 

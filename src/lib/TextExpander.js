@@ -1,21 +1,27 @@
 export default class TextExpander {
 
-  constructor({patterns, afterExpand, beforeExpand, getCurrentLineText, replaceText}) {
+  constructor({patterns, afterExpand, beforeExpand, getCurrentLineText, getPreviousLineText, replaceText}) {
     this.patterns = patterns;
     this.afterExpand = afterExpand;
     this.beforeExpand = beforeExpand;
     this.getCurrentLineText = getCurrentLineText;
+    this.getPreviousLineText = getPreviousLineText;
     this.replaceText = replaceText;
   }
 
   onKeyUp({key, isSpace, isEnter}) {
-    if(isSpace) {
-      this.searchPatterns();
+    if(isSpace || isEnter) {
+      this.searchPatterns({searchPreviousLine: isEnter});
     }
   }
 
-  searchPatterns() {
-    let text = this.getCurrentLineText();
+  searchPatterns({searchPreviousLine} = {}) {
+    let text;
+    if(searchPreviousLine) {
+      text = this.getPreviousLineText();
+    } else {
+      text = this.getCurrentLineText();
+    }
 
     for (let pattern of this.patterns) {
       const match = pattern.regex.exec(text);
@@ -23,17 +29,17 @@ export default class TextExpander {
       const matchedText = match[0];
       if(matchedText) {
         let replaceWith = pattern.callback(matchedText);
-        this.replaceSelection(pattern.regex, replaceWith);
+        this.replaceSelection(pattern.regex, replaceWith, searchPreviousLine);
       }
     }
   }
 
-  replaceSelection(regex, replacement) {
+  replaceSelection(regex, replacement, previousLine) {
     if(this.beforeExpand) {
       this.beforeExpand();
     }
 
-    this.replaceText(regex, replacement);
+    this.replaceText({regex, replacement, previousLine});
 
     if(this.afterExpand) {
       this.afterExpand();

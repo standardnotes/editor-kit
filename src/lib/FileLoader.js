@@ -6,7 +6,15 @@ export default class FileLoader {
     this.filesafe = filesafe;
     this.getElementsBySelector = getElementsBySelector;
     this.insertElement = insertElement;
+
+    // When a file is decrypted and loaded into a temp url, we'll place the temp url in here so that subsequent decrypt attempts
+    // dont require further work. Mapped values are of form {url, fileType, fsname}
+    this.uuidToFileTempUrlAndTypeMapping = {};
+
+    // uuids of files currently loading, so that we don't start a new load for currently loading file
     this.currentlyLoadingIds = [];
+
+    // uuid to current status element mapping
     this.statusElementMapping = {};
 
     this.fileTypeToElementType = {
@@ -30,74 +38,91 @@ export default class FileLoader {
     Scans the document for elements <filesafe>. If found, begins loading file.
   */
   loadFilesafeElements() {
-    let elements = this.getElementsBySelector("p[fscollapsable]");
-    for(let element of elements.nodes) {
+    let elements = this.getElementsBySelector("*[fsplaceholder]");
+    for(let element of elements) {
       this.loadFilesafeElement(element);
     }
   }
 
   /*
   @param fsSyntax
-  The FileSafe syntax string. i.e [FileSafe:uuid-123]
+  The FileSafe syntax string. i.e [FileSafe:uuid-123:name]
   */
 
   async loadFilesafeElement(fsElement) {
-    let uuid = fsElement.getAttribute("fsid");
+    let fsid = fsElement.getAttribute("fsid");
+    let fsname = fsElement.getAttribute("fsname");
 
-    if(this.currentlyLoadingIds.includes(uuid)) {
-      console.log("Already loading file, returning");
+    let existingMapping = this.uuidToFileTempUrlAndTypeMapping[fsid];
+    if(existingMapping) {
+      this.insertMediaElement({url: existingMapping.url, fsid,
+        fileType: existingMapping.fileType, fsname: existingMapping.fsname, fsElement});
       return;
     }
 
-    let descriptor = this.filesafe.findFileDescriptor(uuid);
+    if(this.currentlyLoadingIds.includes(fsid)) {
+      return;
+    }
+
+    let descriptor = this.filesafe.findFileDescriptor(fsid);
     if(!descriptor) {
-      this.setStatus("Unable to find file.", fsElement, uuid);
-      console.log("Can't find descriptor with id", uuid);
+      this.setStatus("Unable to find file.", fsElement, fsid);
+      console.log("Can't find descriptor with id", fsid);
       return {success: false};
     }
 
     let selectorSyntax = `[fsid="${descriptor.uuid}"][fscollapsable]`;
-    var existingElements = document.querySelectorAll(`img${selectorSyntax}, figure${selectorSyntax}, video${selectorSyntax}, audioimg${selectorSyntax}`);
+    var existingElements = document.querySelectorAll(`img${selectorSyntax}, figure${selectorSyntax}, video${selectorSyntax}, audio${selectorSyntax}`);
     if(existingElements.length > 0) {
       console.log("File already exists");
       return {success: false};
     }
 
     const cleanup = () => {
-      this.currentlyLoadingIds.splice(this.currentlyLoadingIds.indexOf(uuid), 1);
+      this.currentlyLoadingIds.splice(this.currentlyLoadingIds.indexOf(fsid), 1);
     }
 
-    this.currentlyLoadingIds.push(uuid);
+    this.currentlyLoadingIds.push(fsid);
 
-    this.setStatus("Downloading file...", fsElement, uuid);
+    this.setStatus("Downloading file...", fsElement, fsid);
     await Util.sleep(0.05); // Allow UI to update before beginning download
     let fileItem = await this.filesafe.downloadFileFromDescriptor(descriptor);
 
-    this.setStatus("Decrypting file...", fsElement, uuid);
+    this.setStatus("Decrypting file...", fsElement, fsid);
     await Util.sleep(0.05); // Allow UI to update before beginning decryption
     let data = await this.filesafe.decryptFile({fileDescriptor: descriptor, fileItem: fileItem})
 
     // Remove loading text
-    this.setStatus(null, fsElement, uuid);
+    this.setStatus(null, fsElement, fsid);
     await Util.sleep(0.05); // Allow UI to update before adding image
 
     // Generate temporary url, must be released later
     let fileType = descriptor.content.fileType;
     let tempUrl = this.filesafe.createTemporaryFileUrl({base64Data: data.decryptedData, dataType: fileType});
+
+    this.insertMediaElement({url: tempUrl, fsid, fileType, fsname, fsElement});
+
+    cleanup();
+
+    this.uuidToFileTempUrlAndTypeMapping[fsid] = {url: tempUrl, fileType, fsname: fsname};
+
+    return {success: true};
+  }
+
+  insertMediaElement({url, fsid, fsname, fileType, fsElement}) {
     let elementType = this.fileTypeForElementType(fileType);
 
     let mediaElement;
     if(elementType == "img") {
-      mediaElement = this.createImageElement(tempUrl, uuid);
+      mediaElement = this.createImageElement({url, fsid, fsname});
     } else if(elementType == "video") {
-      mediaElement = this.createVideoElement(tempUrl, uuid, fileType);
+      mediaElement = this.createVideoElement({url, fsid, fileType, fsname});
     } else if(elementType == "audio") {
-      mediaElement = this.createAudioElement(tempUrl, uuid);
+      mediaElement = this.createAudioElement({url, fsid, fsname});
     } else {
       // File not supported
-      this.setStatus("File not supported.", fsElement, uuid);
-      cleanup();
-      return;
+      this.setStatus("File not supported.", fsElement, fsid);
+      return false;
     }
 
     this.insertElementAdjacent(mediaElement, fsElement);
@@ -105,15 +130,14 @@ export default class FileLoader {
     // Remove fsElement now that image is loaded
     fsElement.remove();
 
-    cleanup();
-
-    return {success: true, tempUrl: tempUrl};
+    return true;
   }
 
-  createVideoElement(url, fsid, type) {
+  createVideoElement({url, fsid, type, fsname}) {
     let video = document.createElement("video");
     video.setAttribute('controls', true);
     video.setAttribute('fsid', fsid);
+    video.setAttribute('fsname', fsname);
     video.setAttribute('fscollapsable', true);
 
     let source = document.createElement("source");
@@ -124,17 +148,18 @@ export default class FileLoader {
     return video;
   }
 
-  createAudioElement(url, fsid) {
+  createAudioElement({url, fsid, fsname}) {
     let audio = document.createElement("audio");
     audio.setAttribute('src', url);
     audio.setAttribute('controls', true);
     audio.setAttribute('fsid', fsid);
+    audio.setAttribute('fsname', fsname);
     audio.setAttribute('fscollapsable', true);
 
     return audio;
   }
 
-  createImageElement(url, fsid) {
+  createImageElement({url, fsid, fsname}) {
     let image = document.createElement("img");
     image.setAttribute('src', url);
     image.setAttribute('srcset', `${url} 2x`);
@@ -145,32 +170,53 @@ export default class FileLoader {
     // on saving to SN, so this text would be lost.
     // let imageContainer = document.createElement('figure');
     image.setAttribute('fsid', fsid);
+    image.setAttribute('fsname', fsname);
     image.setAttribute('fscollapsable', true);
     // imageContainer.append(image);
 
     return image;
   }
 
-  setStatus(status, fsElement, uuid) {
-    let existingStatusElement = this.statusElementMapping[uuid];
-    if(existingStatusElement) {
-      existingStatusElement.remove();
+  setStatus(status, fsElement, fsid) {
+    if(fsid) {
+      let existingStatusElement = this.statusElementMapping[fsid];
+      if(existingStatusElement) {
+        existingStatusElement.remove();
+        delete this.statusElementMapping[fsid];
+      }
     }
 
     if(status) {
-      let element = document.createElement('p');
+      let element = document.createElement('span');
+      element.setAttribute('id', fsid);
       element.setAttribute('ghost', 'true');
       element.setAttribute('contenteditable', false);
       element.setAttribute('style', 'font-weight: bold');
       element.textContent = status;
       this.insertElementAdjacent(element, fsElement);
-      this.statusElementMapping[uuid] = element;
+      if(fsid) {
+        this.statusElementMapping[fsid] = element;
+      }
+      return element;
+    }
+  }
+
+  insertStatusAtCursor(status) {
+    let identifier = Math.random().toString(36).substring(7);
+    this.setStatus(status, null, identifier);
+    return identifier;
+  }
+
+  removeCursorStatus(identifier) {
+    // We want to search for the element based on identifier, because the actual element
+    // inserted may have been done so as raw HTML, and not via an element pointer
+    let elements = this.getElementsBySelector(`#${identifier}`);
+    if(elements.length > 0) {
+      elements[0].remove();
     }
   }
 
   insertElementAdjacent(domNodeToInsert, adjacentToElement) {
-    // let element = domNodeToInsert;
-    // adjacentToElement.after(element);
     // adjacentTo.insertAdjacentElement('beforebegin', insertElement);
     this.insertElement(domNodeToInsert, adjacentToElement);
   }

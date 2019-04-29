@@ -46,7 +46,7 @@ export default class EditorKit {
           }
 
           hasMatch = true;
-          console.log("Attching file descriptor to note", descriptor);
+          // console.log("Attching file descriptor to note", descriptor);
           descriptor.addItemAsRelationship(this.note);
           this.componentManager.saveItem(descriptor);
           this.fileIdsPendingAssociation.splice(this.fileIdsPendingAssociation.indexOf(uuid), 1);
@@ -68,7 +68,7 @@ export default class EditorKit {
     this.filesafe.addNewFileDescriptorHandler((fileDescriptor) => {
       // Called when a new file is uploaded. We'll wait until the bridge acknowledges
       // receipt of this item, and then it will be added to the editor.
-      console.log("Adding file descriptror to association queue", fileDescriptor.uuid);
+      // console.log("Adding file descriptror to association queue", fileDescriptor.uuid);
       this.fileIdsPendingAssociation.push(fileDescriptor.uuid);
     })
 
@@ -83,6 +83,7 @@ export default class EditorKit {
         this.fileLoader.loadFilesafeElements();
       },
       getCurrentLineText: this.delegate.getCurrentLineText,
+      getPreviousLineText: this.delegate.getPreviousLineText,
       replaceText: this.delegate.replaceText,
       patterns: [{
         regex: FilesafeHtml.FilesafeSyntaxPattern,
@@ -105,7 +106,18 @@ export default class EditorKit {
     this.componentManager.streamContextItem((note) => {
       // Todo: if note has changed, release previous temp object urls
       let itemClass = Filesafe.getSFItemClass();
+
+      let isNewNoteLoad = true;
+      if(this.note && this.note.uuid == note.uuid) {
+        isNewNoteLoad = false;
+      }
+
       this.note = new itemClass(note);
+
+      if(this.supportsFilesafe)  {
+        this.filesafe.setCurrentNote(this.note);
+      }
+
        // Only update UI on non-metadata updates.
       if(note.isMetadataUpdate) { return; }
 
@@ -122,6 +134,10 @@ export default class EditorKit {
       }
 
       this.delegate.setEditorRawText(text);
+
+      if(isNewNoteLoad) {
+        this.delegate.clearUndoHistory();
+      }
     });
   }
 
@@ -164,7 +180,10 @@ export default class EditorKit {
   }
 
   async uploadJSFileObject(file) {
-    return this.filesafe.encryptAndUploadJavaScriptFileObject(file);
+    let status = this.fileLoader.insertStatusAtCursor("Processing file...");
+    return this.filesafe.encryptAndUploadJavaScriptFileObject(file).then((descriptor) => {
+      this.fileLoader.removeCursorStatus(status);
+    })
   }
 
 }

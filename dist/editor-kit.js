@@ -337,8 +337,8 @@ function () {
                 return "continue";
               }
 
-              hasMatch = true;
-              console.log("Attching file descriptor to note", descriptor);
+              hasMatch = true; // console.log("Attching file descriptor to note", descriptor);
+
               descriptor.addItemAsRelationship(_this.note);
 
               _this.componentManager.saveItem(descriptor);
@@ -382,8 +382,7 @@ function () {
       this.filesafe.addNewFileDescriptorHandler(function (fileDescriptor) {
         // Called when a new file is uploaded. We'll wait until the bridge acknowledges
         // receipt of this item, and then it will be added to the editor.
-        console.log("Adding file descriptror to association queue", fileDescriptor.uuid);
-
+        // console.log("Adding file descriptror to association queue", fileDescriptor.uuid);
         _this.fileIdsPendingAssociation.push(fileDescriptor.uuid);
       });
       this.fileLoader = new __WEBPACK_IMPORTED_MODULE_3__FileLoader_js__["a" /* default */]({
@@ -396,6 +395,7 @@ function () {
           _this.fileLoader.loadFilesafeElements();
         },
         getCurrentLineText: this.delegate.getCurrentLineText,
+        getPreviousLineText: this.delegate.getPreviousLineText,
         replaceText: this.delegate.replaceText,
         patterns: [{
           regex: __WEBPACK_IMPORTED_MODULE_5__FilesafeHtml_js__["a" /* default */].FilesafeSyntaxPattern,
@@ -419,7 +419,18 @@ function () {
       this.componentManager.streamContextItem(function (note) {
         // Todo: if note has changed, release previous temp object urls
         var itemClass = __WEBPACK_IMPORTED_MODULE_1_filesafe_js___default.a.getSFItemClass();
-        _this2.note = new itemClass(note); // Only update UI on non-metadata updates.
+        var isNewNoteLoad = true;
+
+        if (_this2.note && _this2.note.uuid == note.uuid) {
+          isNewNoteLoad = false;
+        }
+
+        _this2.note = new itemClass(note);
+
+        if (_this2.supportsFilesafe) {
+          _this2.filesafe.setCurrentNote(_this2.note);
+        } // Only update UI on non-metadata updates.
+
 
         if (note.isMetadataUpdate) {
           return;
@@ -436,6 +447,10 @@ function () {
         }
 
         _this2.delegate.setEditorRawText(text);
+
+        if (isNewNoteLoad) {
+          _this2.delegate.clearUndoHistory();
+        }
       });
     }
   }, {
@@ -494,13 +509,19 @@ function () {
       var _uploadJSFileObject = _asyncToGenerator(
       /*#__PURE__*/
       regeneratorRuntime.mark(function _callee(file) {
+        var _this4 = this;
+
+        var status;
         return regeneratorRuntime.wrap(function _callee$(_context) {
           while (1) {
             switch (_context.prev = _context.next) {
               case 0:
-                return _context.abrupt("return", this.filesafe.encryptAndUploadJavaScriptFileObject(file));
+                status = this.fileLoader.insertStatusAtCursor("Processing file...");
+                return _context.abrupt("return", this.filesafe.encryptAndUploadJavaScriptFileObject(file).then(function (descriptor) {
+                  _this4.fileLoader.removeCursorStatus(status);
+                }));
 
-              case 1:
+              case 2:
               case "end":
                 return _context.stop();
             }
@@ -1246,8 +1267,13 @@ function () {
 
     this.filesafe = filesafe;
     this.getElementsBySelector = getElementsBySelector;
-    this.insertElement = insertElement;
-    this.currentlyLoadingIds = [];
+    this.insertElement = insertElement; // When a file is decrypted and loaded into a temp url, we'll place the temp url in here so that subsequent decrypt attempts
+    // dont require further work. Mapped values are of form {url, fileType, fsname}
+
+    this.uuidToFileTempUrlAndTypeMapping = {}; // uuids of files currently loading, so that we don't start a new load for currently loading file
+
+    this.currentlyLoadingIds = []; // uuid to current status element mapping
+
     this.statusElementMapping = {};
     this.fileTypeToElementType = {
       "image/png": "img",
@@ -1274,13 +1300,13 @@ function () {
   }, {
     key: "loadFilesafeElements",
     value: function loadFilesafeElements() {
-      var elements = this.getElementsBySelector("p[fscollapsable]");
+      var elements = this.getElementsBySelector("*[fsplaceholder]");
       var _iteratorNormalCompletion = true;
       var _didIteratorError = false;
       var _iteratorError = undefined;
 
       try {
-        for (var _iterator = elements.nodes[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+        for (var _iterator = elements[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
           var element = _step.value;
           this.loadFilesafeElement(element);
         }
@@ -1301,7 +1327,7 @@ function () {
     }
     /*
     @param fsSyntax
-    The FileSafe syntax string. i.e [FileSafe:uuid-123]
+    The FileSafe syntax string. i.e [FileSafe:uuid-123:name]
     */
 
   }, {
@@ -1312,41 +1338,57 @@ function () {
       regeneratorRuntime.mark(function _callee(fsElement) {
         var _this = this;
 
-        var uuid, descriptor, selectorSyntax, existingElements, cleanup, fileItem, data, fileType, tempUrl, elementType, mediaElement;
+        var fsid, fsname, existingMapping, descriptor, selectorSyntax, existingElements, cleanup, fileItem, data, fileType, tempUrl;
         return regeneratorRuntime.wrap(function _callee$(_context) {
           while (1) {
             switch (_context.prev = _context.next) {
               case 0:
-                uuid = fsElement.getAttribute("fsid");
+                fsid = fsElement.getAttribute("fsid");
+                fsname = fsElement.getAttribute("fsname");
+                existingMapping = this.uuidToFileTempUrlAndTypeMapping[fsid];
 
-                if (!this.currentlyLoadingIds.includes(uuid)) {
-                  _context.next = 4;
+                if (!existingMapping) {
+                  _context.next = 6;
                   break;
                 }
 
-                console.log("Already loading file, returning");
+                this.insertMediaElement({
+                  url: existingMapping.url,
+                  fsid: fsid,
+                  fileType: existingMapping.fileType,
+                  fsname: existingMapping.fsname,
+                  fsElement: fsElement
+                });
                 return _context.abrupt("return");
 
-              case 4:
-                descriptor = this.filesafe.findFileDescriptor(uuid);
-
-                if (descriptor) {
-                  _context.next = 9;
+              case 6:
+                if (!this.currentlyLoadingIds.includes(fsid)) {
+                  _context.next = 8;
                   break;
                 }
 
-                this.setStatus("Unable to find file.", fsElement, uuid);
-                console.log("Can't find descriptor with id", uuid);
+                return _context.abrupt("return");
+
+              case 8:
+                descriptor = this.filesafe.findFileDescriptor(fsid);
+
+                if (descriptor) {
+                  _context.next = 13;
+                  break;
+                }
+
+                this.setStatus("Unable to find file.", fsElement, fsid);
+                console.log("Can't find descriptor with id", fsid);
                 return _context.abrupt("return", {
                   success: false
                 });
 
-              case 9:
+              case 13:
                 selectorSyntax = "[fsid=\"".concat(descriptor.uuid, "\"][fscollapsable]");
-                existingElements = document.querySelectorAll("img".concat(selectorSyntax, ", figure").concat(selectorSyntax, ", video").concat(selectorSyntax, ", audioimg").concat(selectorSyntax));
+                existingElements = document.querySelectorAll("img".concat(selectorSyntax, ", figure").concat(selectorSyntax, ", video").concat(selectorSyntax, ", audio").concat(selectorSyntax));
 
                 if (!(existingElements.length > 0)) {
-                  _context.next = 14;
+                  _context.next = 18;
                   break;
                 }
 
@@ -1355,41 +1397,41 @@ function () {
                   success: false
                 });
 
-              case 14:
+              case 18:
                 cleanup = function cleanup() {
-                  _this.currentlyLoadingIds.splice(_this.currentlyLoadingIds.indexOf(uuid), 1);
+                  _this.currentlyLoadingIds.splice(_this.currentlyLoadingIds.indexOf(fsid), 1);
                 };
 
-                this.currentlyLoadingIds.push(uuid);
-                this.setStatus("Downloading file...", fsElement, uuid);
-                _context.next = 19;
+                this.currentlyLoadingIds.push(fsid);
+                this.setStatus("Downloading file...", fsElement, fsid);
+                _context.next = 23;
                 return __WEBPACK_IMPORTED_MODULE_0__Util_js__["a" /* default */].sleep(0.05);
 
-              case 19:
-                _context.next = 21;
+              case 23:
+                _context.next = 25;
                 return this.filesafe.downloadFileFromDescriptor(descriptor);
 
-              case 21:
+              case 25:
                 fileItem = _context.sent;
-                this.setStatus("Decrypting file...", fsElement, uuid);
-                _context.next = 25;
+                this.setStatus("Decrypting file...", fsElement, fsid);
+                _context.next = 29;
                 return __WEBPACK_IMPORTED_MODULE_0__Util_js__["a" /* default */].sleep(0.05);
 
-              case 25:
-                _context.next = 27;
+              case 29:
+                _context.next = 31;
                 return this.filesafe.decryptFile({
                   fileDescriptor: descriptor,
                   fileItem: fileItem
                 });
 
-              case 27:
+              case 31:
                 data = _context.sent;
                 // Remove loading text
-                this.setStatus(null, fsElement, uuid);
-                _context.next = 31;
+                this.setStatus(null, fsElement, fsid);
+                _context.next = 35;
                 return __WEBPACK_IMPORTED_MODULE_0__Util_js__["a" /* default */].sleep(0.05);
 
-              case 31:
+              case 35:
                 // Allow UI to update before adding image
                 // Generate temporary url, must be released later
                 fileType = descriptor.content.fileType;
@@ -1397,54 +1439,24 @@ function () {
                   base64Data: data.decryptedData,
                   dataType: fileType
                 });
-                elementType = this.fileTypeForElementType(fileType);
-
-                if (!(elementType == "img")) {
-                  _context.next = 38;
-                  break;
-                }
-
-                mediaElement = this.createImageElement(tempUrl, uuid);
-                _context.next = 49;
-                break;
-
-              case 38:
-                if (!(elementType == "video")) {
-                  _context.next = 42;
-                  break;
-                }
-
-                mediaElement = this.createVideoElement(tempUrl, uuid, fileType);
-                _context.next = 49;
-                break;
-
-              case 42:
-                if (!(elementType == "audio")) {
-                  _context.next = 46;
-                  break;
-                }
-
-                mediaElement = this.createAudioElement(tempUrl, uuid);
-                _context.next = 49;
-                break;
-
-              case 46:
-                // File not supported
-                this.setStatus("File not supported.", fsElement, uuid);
+                this.insertMediaElement({
+                  url: tempUrl,
+                  fsid: fsid,
+                  fileType: fileType,
+                  fsname: fsname,
+                  fsElement: fsElement
+                });
                 cleanup();
-                return _context.abrupt("return");
-
-              case 49:
-                this.insertElementAdjacent(mediaElement, fsElement); // Remove fsElement now that image is loaded
-
-                fsElement.remove();
-                cleanup();
+                this.uuidToFileTempUrlAndTypeMapping[fsid] = {
+                  url: tempUrl,
+                  fileType: fileType,
+                  fsname: fsname
+                };
                 return _context.abrupt("return", {
-                  success: true,
-                  tempUrl: tempUrl
+                  success: true
                 });
 
-              case 53:
+              case 41:
               case "end":
                 return _context.stop();
             }
@@ -1459,11 +1471,57 @@ function () {
       return loadFilesafeElement;
     }()
   }, {
+    key: "insertMediaElement",
+    value: function insertMediaElement(_ref2) {
+      var url = _ref2.url,
+          fsid = _ref2.fsid,
+          fsname = _ref2.fsname,
+          fileType = _ref2.fileType,
+          fsElement = _ref2.fsElement;
+      var elementType = this.fileTypeForElementType(fileType);
+      var mediaElement;
+
+      if (elementType == "img") {
+        mediaElement = this.createImageElement({
+          url: url,
+          fsid: fsid,
+          fsname: fsname
+        });
+      } else if (elementType == "video") {
+        mediaElement = this.createVideoElement({
+          url: url,
+          fsid: fsid,
+          fileType: fileType,
+          fsname: fsname
+        });
+      } else if (elementType == "audio") {
+        mediaElement = this.createAudioElement({
+          url: url,
+          fsid: fsid,
+          fsname: fsname
+        });
+      } else {
+        // File not supported
+        this.setStatus("File not supported.", fsElement, fsid);
+        return false;
+      }
+
+      this.insertElementAdjacent(mediaElement, fsElement); // Remove fsElement now that image is loaded
+
+      fsElement.remove();
+      return true;
+    }
+  }, {
     key: "createVideoElement",
-    value: function createVideoElement(url, fsid, type) {
+    value: function createVideoElement(_ref3) {
+      var url = _ref3.url,
+          fsid = _ref3.fsid,
+          type = _ref3.type,
+          fsname = _ref3.fsname;
       var video = document.createElement("video");
       video.setAttribute('controls', true);
       video.setAttribute('fsid', fsid);
+      video.setAttribute('fsname', fsname);
       video.setAttribute('fscollapsable', true);
       var source = document.createElement("source");
       source.setAttribute('src', url);
@@ -1473,17 +1531,24 @@ function () {
     }
   }, {
     key: "createAudioElement",
-    value: function createAudioElement(url, fsid) {
+    value: function createAudioElement(_ref4) {
+      var url = _ref4.url,
+          fsid = _ref4.fsid,
+          fsname = _ref4.fsname;
       var audio = document.createElement("audio");
       audio.setAttribute('src', url);
       audio.setAttribute('controls', true);
       audio.setAttribute('fsid', fsid);
+      audio.setAttribute('fsname', fsname);
       audio.setAttribute('fscollapsable', true);
       return audio;
     }
   }, {
     key: "createImageElement",
-    value: function createImageElement(url, fsid) {
+    value: function createImageElement(_ref5) {
+      var url = _ref5.url,
+          fsid = _ref5.fsid,
+          fsname = _ref5.fsname;
       var image = document.createElement("img");
       image.setAttribute('src', url);
       image.setAttribute('srcset', "".concat(url, " 2x")); // We'd like to wrap it in a figure ideally, but right now there is a bug where inserting
@@ -1493,34 +1558,60 @@ function () {
       // let imageContainer = document.createElement('figure');
 
       image.setAttribute('fsid', fsid);
+      image.setAttribute('fsname', fsname);
       image.setAttribute('fscollapsable', true); // imageContainer.append(image);
 
       return image;
     }
   }, {
     key: "setStatus",
-    value: function setStatus(status, fsElement, uuid) {
-      var existingStatusElement = this.statusElementMapping[uuid];
+    value: function setStatus(status, fsElement, fsid) {
+      if (fsid) {
+        var existingStatusElement = this.statusElementMapping[fsid];
 
-      if (existingStatusElement) {
-        existingStatusElement.remove();
+        if (existingStatusElement) {
+          existingStatusElement.remove();
+          delete this.statusElementMapping[fsid];
+        }
       }
 
       if (status) {
-        var element = document.createElement('p');
+        var element = document.createElement('span');
+        element.setAttribute('id', fsid);
         element.setAttribute('ghost', 'true');
         element.setAttribute('contenteditable', false);
         element.setAttribute('style', 'font-weight: bold');
         element.textContent = status;
         this.insertElementAdjacent(element, fsElement);
-        this.statusElementMapping[uuid] = element;
+
+        if (fsid) {
+          this.statusElementMapping[fsid] = element;
+        }
+
+        return element;
+      }
+    }
+  }, {
+    key: "insertStatusAtCursor",
+    value: function insertStatusAtCursor(status) {
+      var identifier = Math.random().toString(36).substring(7);
+      this.setStatus(status, null, identifier);
+      return identifier;
+    }
+  }, {
+    key: "removeCursorStatus",
+    value: function removeCursorStatus(identifier) {
+      // We want to search for the element based on identifier, because the actual element
+      // inserted may have been done so as raw HTML, and not via an element pointer
+      var elements = this.getElementsBySelector("#".concat(identifier));
+
+      if (elements.length > 0) {
+        elements[0].remove();
       }
     }
   }, {
     key: "insertElementAdjacent",
     value: function insertElementAdjacent(domNodeToInsert, adjacentToElement) {
-      // let element = domNodeToInsert;
-      // adjacentToElement.after(element);
       // adjacentTo.insertAdjacentElement('beforebegin', insertElement);
       this.insertElement(domNodeToInsert, adjacentToElement);
     }
@@ -1551,6 +1642,7 @@ function () {
         afterExpand = _ref.afterExpand,
         beforeExpand = _ref.beforeExpand,
         getCurrentLineText = _ref.getCurrentLineText,
+        getPreviousLineText = _ref.getPreviousLineText,
         replaceText = _ref.replaceText;
 
     _classCallCheck(this, TextExpander);
@@ -1559,6 +1651,7 @@ function () {
     this.afterExpand = afterExpand;
     this.beforeExpand = beforeExpand;
     this.getCurrentLineText = getCurrentLineText;
+    this.getPreviousLineText = getPreviousLineText;
     this.replaceText = replaceText;
   }
 
@@ -1569,14 +1662,26 @@ function () {
           isSpace = _ref2.isSpace,
           isEnter = _ref2.isEnter;
 
-      if (isSpace) {
-        this.searchPatterns();
+      if (isSpace || isEnter) {
+        this.searchPatterns({
+          searchPreviousLine: isEnter
+        });
       }
     }
   }, {
     key: "searchPatterns",
     value: function searchPatterns() {
-      var text = this.getCurrentLineText();
+      var _ref3 = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {},
+          searchPreviousLine = _ref3.searchPreviousLine;
+
+      var text;
+
+      if (searchPreviousLine) {
+        text = this.getPreviousLineText();
+      } else {
+        text = this.getCurrentLineText();
+      }
+
       var _iteratorNormalCompletion = true;
       var _didIteratorError = false;
       var _iteratorError = undefined;
@@ -1594,7 +1699,7 @@ function () {
 
           if (matchedText) {
             var replaceWith = pattern.callback(matchedText);
-            this.replaceSelection(pattern.regex, replaceWith);
+            this.replaceSelection(pattern.regex, replaceWith, searchPreviousLine);
           }
         }
       } catch (err) {
@@ -1614,12 +1719,16 @@ function () {
     }
   }, {
     key: "replaceSelection",
-    value: function replaceSelection(regex, replacement) {
+    value: function replaceSelection(regex, replacement, previousLine) {
       if (this.beforeExpand) {
         this.beforeExpand();
       }
 
-      this.replaceText(regex, replacement);
+      this.replaceText({
+        regex: regex,
+        replacement: replacement,
+        previousLine: previousLine
+      });
 
       if (this.afterExpand) {
         this.afterExpand();
@@ -1683,10 +1792,11 @@ function () {
 
       syntax = syntax.replace("[", "").replace("]", "");
       var components = syntax.split(":");
-      var uuid = components[1]; // We use a p tag here because if try something custom, like `filesafe` tag, the editor will automatically
+      var uuid = components[1];
+      var name = components[2]; // We use a p tag here because if try something custom, like `filesafe` tag, the editor will automatically
       // wrap it in a p tag, causing littered p tags remaining in the plaintext representation.
 
-      var result = "<p style='display: none;' fscollapsable=true ghost=true fsid=".concat(uuid, "></p>");
+      var result = "<span fsplaceholder=true style='display: none;' fscollapsable=true ghost=true fsid=".concat(uuid, " fsname=").concat(name, "></span>");
       return result;
     }
     /*
@@ -1708,7 +1818,8 @@ function () {
         for (var _iterator = mediaElements[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
           var file = _step.value;
           var uuid = file.getAttribute('fsid');
-          file.insertAdjacentText('afterend', "[FileSafe:".concat(uuid, "]"));
+          var name = file.getAttribute('fsname');
+          file.insertAdjacentText('afterend', "[FileSafe:".concat(uuid, ":").concat(name, "]"));
           file.remove();
         }
       } catch (err) {
@@ -1765,9 +1876,11 @@ var EditorKitDelegate = function EditorKitDelegate(_ref) {
       onReceiveNote = _ref.onReceiveNote,
       setEditorRawText = _ref.setEditorRawText,
       getCurrentLineText = _ref.getCurrentLineText,
+      getPreviousLineText = _ref.getPreviousLineText,
       replaceText = _ref.replaceText,
       getElementsBySelector = _ref.getElementsBySelector,
-      insertElement = _ref.insertElement;
+      insertElement = _ref.insertElement,
+      clearUndoHistory = _ref.clearUndoHistory;
 
   _classCallCheck(this, EditorKitDelegate);
 
@@ -1775,9 +1888,11 @@ var EditorKitDelegate = function EditorKitDelegate(_ref) {
   this.onReceiveNote = onReceiveNote;
   this.setEditorRawText = setEditorRawText;
   this.getCurrentLineText = getCurrentLineText;
+  this.getPreviousLineText = getPreviousLineText;
   this.replaceText = replaceText;
   this.getElementsBySelector = getElementsBySelector;
   this.insertElement = insertElement;
+  this.clearUndoHistory = clearUndoHistory;
 };
 
 
