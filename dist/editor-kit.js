@@ -253,12 +253,10 @@ function () {
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "a", function() { return EditorKit; });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_sn_components_api__ = __webpack_require__(3);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_sn_components_api___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_sn_components_api__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_filesafe_js__ = __webpack_require__(4);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_filesafe_js___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1_filesafe_js__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__Util_js__ = __webpack_require__(0);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__FileLoader_js__ = __webpack_require__(5);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__TextExpander_js__ = __webpack_require__(6);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__FilesafeHtml_js__ = __webpack_require__(7);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__Util_js__ = __webpack_require__(0);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__FileLoader_js__ = __webpack_require__(4);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__TextExpander_js__ = __webpack_require__(5);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__FilesafeHtml_js__ = __webpack_require__(6);
 function asyncGeneratorStep(gen, resolve, reject, _next, _throw, key, arg) { try { var info = gen[key](arg); var value = info.value; } catch (error) { reject(error); return; } if (info.done) { resolve(value); } else { Promise.resolve(value).then(_next, _throw); } }
 
 function _asyncToGenerator(fn) { return function () { var self = this, args = arguments; return new Promise(function (resolve, reject) { var gen = fn.apply(self, args); function _next(value) { asyncGeneratorStep(gen, resolve, reject, _next, _throw, "next", value); } function _throw(err) { asyncGeneratorStep(gen, resolve, reject, _next, _throw, "throw", err); } _next(undefined); }); }; }
@@ -275,11 +273,12 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
 
 
 
-
 var EditorKit =
 /*#__PURE__*/
 function () {
   function EditorKit(_ref) {
+    var _this = this;
+
     var delegate = _ref.delegate,
         mode = _ref.mode,
         supportsFilesafe = _ref.supportsFilesafe,
@@ -301,26 +300,33 @@ function () {
      */
 
     this.fileIdsPendingAssociation = [];
-    this.connectToBridge();
+    this.connectToBridge(); // Conditionally import filesafe-js. This way, consumers using editor-kit
+    // who don't want FileSafe support don't have to import a large module.
+    // Consumers who do want FileSafe support must include filesafe-js in their own package.json
+    // Note that filesafe-js is set as an "external" in webpack.config, so it is not included in the EditorKit bundle
 
     if (supportsFilesafe) {
-      this.configureFilesafe();
+      new Promise(function(resolve) { resolve(); }).then(__webpack_require__.bind(null, 7)).then(function (result) {
+        _this.FilesafeClass = result["default"];
+
+        _this.configureFilesafe();
+      });
     }
   }
 
   _createClass(EditorKit, [{
     key: "configureFilesafe",
     value: function configureFilesafe() {
-      var _this = this;
+      var _this2 = this;
 
-      this.filesafe = new __WEBPACK_IMPORTED_MODULE_1_filesafe_js___default.a({
+      this.filesafe = new this.FilesafeClass({
         componentManager: this.componentManager
       });
       this.filesafe.addDataChangeObserver(function () {
         // Reload UI by querying Filesafe for changes
-        var allFileDescriptors = _this.filesafe.getAllFileDescriptors();
+        var allFileDescriptors = _this2.filesafe.getAllFileDescriptors();
 
-        if (_this.note && _this.fileIdsPendingAssociation.length > 0) {
+        if (_this2.note && _this2.fileIdsPendingAssociation.length > 0) {
           var hasMatch = false;
           var _iteratorNormalCompletion = true;
           var _didIteratorError = false;
@@ -339,18 +345,18 @@ function () {
 
               hasMatch = true; // console.log("Attching file descriptor to note", descriptor);
 
-              descriptor.addItemAsRelationship(_this.note);
+              descriptor.addItemAsRelationship(_this2.note);
 
-              _this.componentManager.saveItem(descriptor);
+              _this2.componentManager.saveItem(descriptor);
 
-              _this.fileIdsPendingAssociation.splice(_this.fileIdsPendingAssociation.indexOf(uuid), 1);
+              _this2.fileIdsPendingAssociation.splice(_this2.fileIdsPendingAssociation.indexOf(uuid), 1);
 
-              var syntax = __WEBPACK_IMPORTED_MODULE_5__FilesafeHtml_js__["a" /* default */].insertionSyntaxForFileDescriptor(descriptor);
+              var syntax = __WEBPACK_IMPORTED_MODULE_4__FilesafeHtml_js__["a" /* default */].insertionSyntaxForFileDescriptor(descriptor);
 
-              _this.delegate.insertRawText(syntax);
+              _this2.delegate.insertRawText(syntax);
             };
 
-            for (var _iterator = _this.fileIdsPendingAssociation.slice()[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+            for (var _iterator = _this2.fileIdsPendingAssociation.slice()[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
               var _ret = _loop();
 
               if (_ret === "continue") continue;
@@ -371,36 +377,36 @@ function () {
           }
 
           if (hasMatch) {
-            _this.textExpander.searchPatterns();
+            _this2.textExpander.searchPatterns();
           }
         }
 
         if (allFileDescriptors.length > 0) {
-          _this.fileLoader.loadFilesafeElements();
+          _this2.fileLoader.loadFilesafeElements();
         }
       });
       this.filesafe.addNewFileDescriptorHandler(function (fileDescriptor) {
         // Called when a new file is uploaded. We'll wait until the bridge acknowledges
         // receipt of this item, and then it will be added to the editor.
         // console.log("Adding file descriptror to association queue", fileDescriptor.uuid);
-        _this.fileIdsPendingAssociation.push(fileDescriptor.uuid);
+        _this2.fileIdsPendingAssociation.push(fileDescriptor.uuid);
       });
-      this.fileLoader = new __WEBPACK_IMPORTED_MODULE_3__FileLoader_js__["a" /* default */]({
+      this.fileLoader = new __WEBPACK_IMPORTED_MODULE_2__FileLoader_js__["a" /* default */]({
         filesafe: this.filesafe,
         getElementsBySelector: this.delegate.getElementsBySelector,
         insertElement: this.delegate.insertElement
       });
-      this.textExpander = new __WEBPACK_IMPORTED_MODULE_4__TextExpander_js__["a" /* default */]({
+      this.textExpander = new __WEBPACK_IMPORTED_MODULE_3__TextExpander_js__["a" /* default */]({
         afterExpand: function afterExpand() {
-          _this.fileLoader.loadFilesafeElements();
+          _this2.fileLoader.loadFilesafeElements();
         },
         getCurrentLineText: this.delegate.getCurrentLineText,
         getPreviousLineText: this.delegate.getPreviousLineText,
         replaceText: this.delegate.replaceText,
         patterns: [{
-          regex: __WEBPACK_IMPORTED_MODULE_5__FilesafeHtml_js__["a" /* default */].FilesafeSyntaxPattern,
+          regex: __WEBPACK_IMPORTED_MODULE_4__FilesafeHtml_js__["a" /* default */].FilesafeSyntaxPattern,
           callback: function callback(matchedText) {
-            return __WEBPACK_IMPORTED_MODULE_5__FilesafeHtml_js__["a" /* default */].expandedFilesafeSyntax(matchedText);
+            return __WEBPACK_IMPORTED_MODULE_4__FilesafeHtml_js__["a" /* default */].expandedFilesafeSyntax(matchedText);
           }
         }]
       });
@@ -408,27 +414,28 @@ function () {
   }, {
     key: "connectToBridge",
     value: function connectToBridge() {
-      var _this2 = this;
+      var _this3 = this;
 
       this.componentManager = new __WEBPACK_IMPORTED_MODULE_0_sn_components_api___default.a(null, function () {
         // On ready and permissions authorization
-        document.documentElement.classList.add(_this2.componentManager.platform);
+        document.documentElement.classList.add(_this3.componentManager.platform);
       }); // The editor does some debouncing for us, so we'll lower the default debounce value from 250 to 150
 
       this.componentManager.coallesedSavingDelay = this.coallesedSavingDelay;
       this.componentManager.streamContextItem(function (note) {
         // Todo: if note has changed, release previous temp object urls
-        var itemClass = __WEBPACK_IMPORTED_MODULE_1_filesafe_js___default.a.getSFItemClass();
+        var itemClass = _this3.FilesafeClass.getSFItemClass();
+
         var isNewNoteLoad = true;
 
-        if (_this2.note && _this2.note.uuid == note.uuid) {
+        if (_this3.note && _this3.note.uuid == note.uuid) {
           isNewNoteLoad = false;
         }
 
-        _this2.note = new itemClass(note);
+        _this3.note = new itemClass(note);
 
-        if (_this2.supportsFilesafe) {
-          _this2.filesafe.setCurrentNote(_this2.note);
+        if (_this3.supportsFilesafe) {
+          _this3.filesafe.setCurrentNote(_this3.note);
         } // Only update UI on non-metadata updates.
 
 
@@ -438,18 +445,18 @@ function () {
 
         var text = note.content.text; // Set before expanding. We want this value to always be the collapsed value
 
-        _this2.previousText = text;
+        _this3.previousText = text;
 
-        if (_this2.supportsFilesafe) {
+        if (_this3.supportsFilesafe) {
           // We want to expand any filesafe syntax in the text, but only after the text has been inserted. (Will be checked on editor change callback)
-          _this2.needsFilesafeElementLoad = true;
-          text = __WEBPACK_IMPORTED_MODULE_5__FilesafeHtml_js__["a" /* default */].expandedFilesafeSyntax(text);
+          _this3.needsFilesafeElementLoad = true;
+          text = __WEBPACK_IMPORTED_MODULE_4__FilesafeHtml_js__["a" /* default */].expandedFilesafeSyntax(text);
         }
 
-        _this2.delegate.setEditorRawText(text);
+        _this3.delegate.setEditorRawText(text);
 
         if (isNewNoteLoad) {
-          _this2.delegate.clearUndoHistory();
+          _this3.delegate.clearUndoHistory();
         }
       });
     }
@@ -468,7 +475,7 @@ function () {
   }, {
     key: "onEditorValueChanged",
     value: function onEditorValueChanged(text) {
-      var _this3 = this;
+      var _this4 = this;
 
       if (this.needsFilesafeElementLoad) {
         this.needsFilesafeElementLoad = false;
@@ -476,7 +483,7 @@ function () {
       }
 
       if (this.supportsFilesafe) {
-        text = __WEBPACK_IMPORTED_MODULE_5__FilesafeHtml_js__["a" /* default */].collapseFilesafeSyntax(text); // Change events may be triggered several times when expanding filesafe syntax.
+        text = __WEBPACK_IMPORTED_MODULE_4__FilesafeHtml_js__["a" /* default */].collapseFilesafeSyntax(text); // Change events may be triggered several times when expanding filesafe syntax.
         // Ultimately, while the visual layer is changing a lot, the underlying text layer,
         // after being collapsed, will not change. So we'll compare the previous html to new collapsed html before continuing
 
@@ -495,8 +502,8 @@ function () {
         this.componentManager.saveItemWithPresave(note, function () {
           note.content.text = text;
 
-          if (_this3.mode == 'html') {
-            note.content.preview_plain = __WEBPACK_IMPORTED_MODULE_2__Util_js__["a" /* default */].truncateString(__WEBPACK_IMPORTED_MODULE_2__Util_js__["a" /* default */].htmlToText(text));
+          if (_this4.mode == 'html') {
+            note.content.preview_plain = __WEBPACK_IMPORTED_MODULE_1__Util_js__["a" /* default */].truncateString(__WEBPACK_IMPORTED_MODULE_1__Util_js__["a" /* default */].htmlToText(text));
           } else {
             note.content.preview_plain = null;
           }
@@ -509,7 +516,7 @@ function () {
       var _uploadJSFileObject = _asyncToGenerator(
       /*#__PURE__*/
       regeneratorRuntime.mark(function _callee(file) {
-        var _this4 = this;
+        var _this5 = this;
 
         var status;
         return regeneratorRuntime.wrap(function _callee$(_context) {
@@ -518,7 +525,7 @@ function () {
               case 0:
                 status = this.fileLoader.insertStatusAtCursor("Processing file...");
                 return _context.abrupt("return", this.filesafe.encryptAndUploadJavaScriptFileObject(file).then(function (descriptor) {
-                  _this4.fileLoader.removeCursorStatus(status);
+                  _this5.fileLoader.removeCursorStatus(status);
                 }));
 
               case 2:
@@ -1232,12 +1239,6 @@ if (window) {
 
 /***/ }),
 /* 4 */
-/***/ (function(module, exports) {
-
-module.exports = require("filesafe-js");
-
-/***/ }),
-/* 5 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -1623,7 +1624,7 @@ function () {
 
 
 /***/ }),
-/* 6 */
+/* 5 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -1742,7 +1743,7 @@ function () {
 
 
 /***/ }),
-/* 7 */
+/* 6 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -1851,6 +1852,12 @@ function () {
 _defineProperty(FilesafeHtml, "FilesafeSyntaxPattern", /(<p>)?\[FileSafe.*\](<\/p>)?/g);
 
 
+
+/***/ }),
+/* 7 */
+/***/ (function(module, exports) {
+
+module.exports = require("filesafe-js");
 
 /***/ }),
 /* 8 */

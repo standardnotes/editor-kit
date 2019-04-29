@@ -1,5 +1,4 @@
 import ComponentManager from 'sn-components-api';
-import Filesafe from "filesafe-js";
 
 import Util from "./Util.js"
 import FileLoader from "./FileLoader.js"
@@ -25,13 +24,20 @@ export default class EditorKit {
 
     this.connectToBridge();
 
+    // Conditionally import filesafe-js. This way, consumers using editor-kit
+    // who don't want FileSafe support don't have to import a large module.
+    // Consumers who do want FileSafe support must include filesafe-js in their own package.json
+    // Note that filesafe-js is set as an "external" in webpack.config, so it is not included in the EditorKit bundle
     if(supportsFilesafe) {
-      this.configureFilesafe();
+      import("filesafe-js").then((result) => {
+        this.FilesafeClass = result.default;
+        this.configureFilesafe();
+      })
     }
   }
 
   configureFilesafe() {
-    this.filesafe = new Filesafe({componentManager: this.componentManager});
+    this.filesafe = new this.FilesafeClass({componentManager: this.componentManager});
 
     this.filesafe.addDataChangeObserver(() => {
       // Reload UI by querying Filesafe for changes
@@ -105,7 +111,7 @@ export default class EditorKit {
 
     this.componentManager.streamContextItem((note) => {
       // Todo: if note has changed, release previous temp object urls
-      let itemClass = Filesafe.getSFItemClass();
+      let itemClass = this.FilesafeClass.getSFItemClass();
 
       let isNewNoteLoad = true;
       if(this.note && this.note.uuid == note.uuid) {
