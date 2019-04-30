@@ -43,6 +43,14 @@ class EditorKit {
   }
 
   /*
+    Whether or not filesafe is configured with integrations and keys, and can handle file uploads.
+    If not, user should open files modal and configure FileSafe.
+  */
+  canUploadFiles() {
+    return this.internal.canUploadFiles();
+  }
+
+  /*
     Returns a file descriptor if successful.
    */
   async uploadJSFileObject(file) {

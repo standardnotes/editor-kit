@@ -52,7 +52,6 @@ export default class EditorKit {
   }
 
   configureFilesafe() {
-    console.log("editor-kit | configuring filesafe");
     this.filesafe = new this.FilesafeClass({componentManager: this.componentManager});
 
     this.filesafe.addDataChangeObserver(() => {
@@ -68,7 +67,6 @@ export default class EditorKit {
           }
 
           hasMatch = true;
-          // console.log("Attching file descriptor to note", descriptor);
           descriptor.addItemAsRelationship(this.note);
           this.componentManager.saveItem(descriptor);
           this.fileIdsPendingAssociation.splice(this.fileIdsPendingAssociation.indexOf(uuid), 1);
@@ -90,7 +88,6 @@ export default class EditorKit {
     this.filesafe.addNewFileDescriptorHandler((fileDescriptor) => {
       // Called when a new file is uploaded. We'll wait until the bridge acknowledges
       // receipt of this item, and then it will be added to the editor.
-      // console.log("Adding file descriptror to association queue", fileDescriptor.uuid);
       this.fileIdsPendingAssociation.push(fileDescriptor.uuid);
     })
 
@@ -200,6 +197,12 @@ export default class EditorKit {
         }
       });
     }
+  }
+
+  canUploadFiles() {
+    let credentials = this.filesafe.getAllCredentials();
+    let integrations = this.filesafe.getAllIntegrations();
+    return credentials.length > 0 && integrations.length > 0;
   }
 
   async uploadJSFileObject(file) {

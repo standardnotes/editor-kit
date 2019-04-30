@@ -230,6 +230,16 @@ function () {
       });
     }
     /*
+      Whether or not filesafe is configured with integrations and keys, and can handle file uploads.
+      If not, user should open files modal and configure FileSafe.
+    */
+
+  }, {
+    key: "canUploadFiles",
+    value: function canUploadFiles() {
+      return this.internal.canUploadFiles();
+    }
+    /*
       Returns a file descriptor if successful.
      */
 
@@ -411,7 +421,6 @@ function () {
     value: function configureFilesafe() {
       var _this2 = this;
 
-      console.log("editor-kit | configuring filesafe");
       this.filesafe = new this.FilesafeClass({
         componentManager: this.componentManager
       });
@@ -436,8 +445,7 @@ function () {
                 return "continue";
               }
 
-              hasMatch = true; // console.log("Attching file descriptor to note", descriptor);
-
+              hasMatch = true;
               descriptor.addItemAsRelationship(_this2.note);
 
               _this2.componentManager.saveItem(descriptor);
@@ -481,7 +489,6 @@ function () {
       this.filesafe.addNewFileDescriptorHandler(function (fileDescriptor) {
         // Called when a new file is uploaded. We'll wait until the bridge acknowledges
         // receipt of this item, and then it will be added to the editor.
-        // console.log("Adding file descriptror to association queue", fileDescriptor.uuid);
         _this2.fileIdsPendingAssociation.push(fileDescriptor.uuid);
       });
       this.fileLoader = new __WEBPACK_IMPORTED_MODULE_2__FileLoader_js__["a" /* default */]({
@@ -603,6 +610,13 @@ function () {
           }
         });
       }
+    }
+  }, {
+    key: "canUploadFiles",
+    value: function canUploadFiles() {
+      var credentials = this.filesafe.getAllCredentials();
+      var integrations = this.filesafe.getAllIntegrations();
+      return credentials.length > 0 && integrations.length > 0;
     }
   }, {
     key: "uploadJSFileObject",
