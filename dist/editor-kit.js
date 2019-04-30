@@ -578,6 +578,7 @@ function () {
     value: function onEditorValueChanged(text) {
       var _this4 = this;
 
+      // console.log("onEditorValueChanged", text);
       if (this.needsFilesafeElementLoad) {
         this.needsFilesafeElementLoad = false;
         this.fileLoader.loadFilesafeElements();
@@ -591,7 +592,6 @@ function () {
         var sameText = this.previousText == text;
 
         if (sameText) {
-          // console.log("Changed html is same as previous, ignoring");
           return;
         }
       }
@@ -1640,9 +1640,13 @@ function () {
           fsname: fsname
         });
       } else {
-        // File not supported
-        this.setStatus("File not supported.", fsElement, fsid);
-        return false;
+        mediaElement = this.createDownloadElement({
+          url: url,
+          fsid: fsid,
+          fileType: fileType,
+          fsname: fsname,
+          fsElement: fsElement
+        });
       }
 
       this.insertElementAdjacent(mediaElement, fsElement); // Remove fsElement now that image is loaded
@@ -1723,11 +1727,28 @@ function () {
       });
     }
   }, {
-    key: "createAudioElement",
-    value: function createAudioElement(_ref6) {
+    key: "createDownloadElement",
+    value: function createDownloadElement(_ref6) {
       var url = _ref6.url,
           fsid = _ref6.fsid,
-          fsname = _ref6.fsname;
+          fileType = _ref6.fileType,
+          fsname = _ref6.fsname,
+          fsElement = _ref6.fsElement;
+      var a = document.createElement("a");
+      a.setAttribute('fsid', fsid);
+      a.setAttribute('fsname', fsname);
+      a.setAttribute('ghost', 'true');
+      a.setAttribute('fscollapsable', true);
+      a.setAttribute('href', url);
+      a.textContent = "".concat(fsname);
+      return a;
+    }
+  }, {
+    key: "createAudioElement",
+    value: function createAudioElement(_ref7) {
+      var url = _ref7.url,
+          fsid = _ref7.fsid,
+          fsname = _ref7.fsname;
       var audio = document.createElement("audio");
       audio.setAttribute('src', url);
       audio.setAttribute('controls', true);
@@ -1944,6 +1965,7 @@ function () {
   _createClass(FilesafeHtml, null, [{
     key: "expandedFilesafeSyntax",
     // Remove matching <p> tags if present
+    // Also capable of matching adjacent [fsSyntax][fsSyntax]
 
     /*
     Given an HTML string that includes substrings matching `FilesafeSyntaxPattern`,
@@ -2022,7 +2044,8 @@ function () {
           if (numChildren == numGhosts) {
             pTagsToRemoveCandidates.push(pTag);
           }
-        }
+        } // List of syntaxes we insert.
+
       } catch (err) {
         _didIteratorError = true;
         _iteratorError = err;
@@ -2038,6 +2061,7 @@ function () {
         }
       }
 
+      var insertedSyntaxes = [];
       var _iteratorNormalCompletion2 = true;
       var _didIteratorError2 = false;
       var _iteratorError2 = undefined;
@@ -2057,6 +2081,7 @@ function () {
           }
 
           var fsSyntax = "[".concat(components.join(":"), "]");
+          insertedSyntaxes.push(fsSyntax);
           file.insertAdjacentText('afterend', fsSyntax);
           file.remove();
         }
@@ -2080,8 +2105,22 @@ function () {
         ghost.remove();
       });
       pTagsToRemoveCandidates.forEach(function (pTag) {
-        // Make sure children count is still 0
-        if (pTag.children.length == 0 && pTag.innerHTML.trim().length == 0) {
+        // Make sure children count is still 0.
+        // If the elements inner html is equal to some fsSyntax we inserted,
+        // then we want to delete the p tag as well.
+        var innerHTML = pTag.innerHTML.trim();
+        var isEmpty = pTag.children.length == 0 && innerHTML.length == 0;
+        var isSyntaxContainer = insertedSyntaxes.includes(innerHTML);
+
+        if (isEmpty) {
+          pTag.remove();
+        } else if (isSyntaxContainer) {
+          // If the sole purpose of this <p> tag is to contain some fsSyntax,
+          // we'll get rid of the p tag and have the syntax stand on its own.
+          // This is due to the behavior of the Redactor editor that automatically wraps
+          // plaintext content in p tags, thus triggering a change event. If we remove the p tag,
+          // we can ensure content stays the same.
+          pTag.insertAdjacentText('afterend', innerHTML);
           pTag.remove();
         }
       });
@@ -2093,7 +2132,7 @@ function () {
   return FilesafeHtml;
 }();
 
-_defineProperty(FilesafeHtml, "FilesafeSyntaxPattern", /(<p>)?\[FileSafe.*\](<\/p>)?/g);
+_defineProperty(FilesafeHtml, "FilesafeSyntaxPattern", /(<p>)?\[FileSafe[^\]]*\](<\/p>)?/g);
 
 
 

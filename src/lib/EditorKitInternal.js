@@ -166,6 +166,7 @@ export default class EditorKit {
   }
 
   onEditorValueChanged(text) {
+    // console.log("onEditorValueChanged", text);
     if(this.needsFilesafeElementLoad) {
        this.needsFilesafeElementLoad = false;
        this.fileLoader.loadFilesafeElements();
@@ -179,7 +180,6 @@ export default class EditorKit {
       // after being collapsed, will not change. So we'll compare the previous html to new collapsed html before continuing
       let sameText = this.previousText == text;
       if(sameText) {
-        // console.log("Changed html is same as previous, ignoring");
         return;
       }
     }

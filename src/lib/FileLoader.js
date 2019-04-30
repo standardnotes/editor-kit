@@ -135,9 +135,7 @@ export default class FileLoader {
     } else if(elementType == "audio") {
       mediaElement = this.createAudioElement({url, fsid, fsname});
     } else {
-      // File not supported
-      this.setStatus("File not supported.", fsElement, fsid);
-      return false;
+      mediaElement = this.createDownloadElement({url, fsid, fileType, fsname, fsElement});
     }
 
     this.insertElementAdjacent(mediaElement, fsElement);
@@ -200,6 +198,17 @@ export default class FileLoader {
 
     video.append(source);
     return this.wrapElementInFigure({element: video, fsid, fsname});
+  }
+
+  createDownloadElement({url, fsid, fileType, fsname, fsElement}) {
+    let a = document.createElement("a");
+    a.setAttribute('fsid', fsid);
+    a.setAttribute('fsname', fsname);
+    a.setAttribute('ghost', 'true');
+    a.setAttribute('fscollapsable', true);
+    a.setAttribute('href', url);
+    a.textContent = `${fsname}`;
+    return a;
   }
 
   createAudioElement({url, fsid, fsname}) {

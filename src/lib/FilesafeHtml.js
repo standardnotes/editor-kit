@@ -1,7 +1,8 @@
 export default class FilesafeHtml {
 
   // Remove matching <p> tags if present
-  static FilesafeSyntaxPattern = /(<p>)?\[FileSafe.*\](<\/p>)?/g;
+  // Also capable of matching adjacent [fsSyntax][fsSyntax]
+  static FilesafeSyntaxPattern = /(<p>)?\[FileSafe[^\]]*\](<\/p>)?/g;
 
   /*
   Given an HTML string that includes substrings matching `FilesafeSyntaxPattern`,
@@ -69,6 +70,9 @@ export default class FilesafeHtml {
       }
     }
 
+    // List of syntaxes we insert.
+    let insertedSyntaxes = [];
+
     for(let file of mediaElements) {
       let uuid = file.getAttribute('fsid');
       let name = file.getAttribute('fsname');
@@ -82,16 +86,31 @@ export default class FilesafeHtml {
       }
 
       let fsSyntax = `[${components.join(":")}]`;
+      insertedSyntaxes.push(fsSyntax);
       file.insertAdjacentText('afterend', fsSyntax);
       file.remove();
     }
 
     let ghosts = domCopy.querySelectorAll(`*[ghost]`);
     ghosts.forEach((ghost) => {ghost.remove()});
+
     pTagsToRemoveCandidates.forEach((pTag) => {
-      // Make sure children count is still 0
-      if(pTag.children.length == 0 && pTag.innerHTML.trim().length == 0) {
+      // Make sure children count is still 0.
+      // If the elements inner html is equal to some fsSyntax we inserted,
+      // then we want to delete the p tag as well.
+      let innerHTML = pTag.innerHTML.trim();
+      let isEmpty = pTag.children.length == 0 && innerHTML.length == 0;
+      let isSyntaxContainer = insertedSyntaxes.includes(innerHTML);
+      if(isEmpty) {
         pTag.remove()
+      } else if(isSyntaxContainer) {
+        // If the sole purpose of this <p> tag is to contain some fsSyntax,
+        // we'll get rid of the p tag and have the syntax stand on its own.
+        // This is due to the behavior of the Redactor editor that automatically wraps
+        // plaintext content in p tags, thus triggering a change event. If we remove the p tag,
+        // we can ensure content stays the same.
+        pTag.insertAdjacentText('afterend', innerHTML);
+        pTag.remove();
       }
     });
 
