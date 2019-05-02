@@ -1649,7 +1649,7 @@ function () {
         });
       }
 
-      this.insertElementAdjacent(mediaElement, fsElement); // Remove fsElement now that image is loaded
+      this.insertElementNearElement(mediaElement, fsElement); // Remove fsElement now that image is loaded
 
       fsElement.remove();
       return true;
@@ -1781,7 +1781,7 @@ function () {
         element.setAttribute('contenteditable', false);
         element.setAttribute('style', 'font-weight: bold');
         element.textContent = status;
-        element = this.insertElementAdjacent(element, fsElement);
+        element = this.insertElementNearElement(element, fsElement);
 
         if (fsid) {
           this.statusElementMapping[fsid] = element;
@@ -1809,10 +1809,24 @@ function () {
       }
     }
   }, {
-    key: "insertElementAdjacent",
-    value: function insertElementAdjacent(domNodeToInsert, adjacentToElement) {
+    key: "insertElementNearElement",
+    value: function insertElementNearElement(domNodeToInsert, inVicinityOfElement) {
       var processedElement = this.preprocessElement(domNodeToInsert);
-      this.insertElement(processedElement, adjacentToElement);
+      var insertionType = "child"; // <figure> tags cannot be nested inside p tags.
+
+      if (processedElement.tagName.toLowerCase() == "figure") {
+        // If we have a p ancestor, we need to get out.
+        var pAncestor = inVicinityOfElement.closest("p");
+
+        if (pAncestor) {
+          // p tags cannot be nested in other p tags, so if we found one, we know its parent isn't and doesn't belong to a ptag.
+          // add the new right after pAncestor
+          inVicinityOfElement = pAncestor;
+          insertionType = "afterend";
+        }
+      }
+
+      this.insertElement(processedElement, inVicinityOfElement, insertionType);
       return processedElement;
     }
   }]);
@@ -2005,7 +2019,7 @@ function () {
       // wrap it in a p tag, causing littered p tags remaining in the plaintext representation.
 
 
-      var result = "<span fsplaceholder=true style='display: none;' fscollapsable=true ghost=true fsid=".concat(uuid, " fsname=").concat(name, " ").concat(sizeString, "></span>");
+      var result = "<p fsplaceholder=true style='display: none;' fscollapsable=true ghost=true fsid=".concat(uuid, " fsname=").concat(name, " ").concat(sizeString, "></p>");
       return result;
     }
     /*
@@ -2019,33 +2033,28 @@ function () {
       var domCopy = new DOMParser().parseFromString(html, "text/html"); // Elements that have fscollapsable means they should be collapsed to plain syntax
 
       var mediaElements = domCopy.querySelectorAll("*[fscollapsable]");
-      /*
-       Some editors (Redactor) may arbitrarily wrap elements inside a <p> tag before inserting into dom
-       Then, when we collapse all the elements, and when the ghosts are removed, we find an emtpy <p> tag
-       just sitting around. We want to find these candidates by scanning for all p tags, checking to see how many ghosts it has,
-       and if the number of ghosts matches its number of children, we know that after everything is collapsed, this p tag will most
-       likely be empty. However, if we replace an element with its collapsed syntax, it will not be empty.
-       So items placed in pTagsToRemoveCandidates are just candidates. We'll check again after we do all collapsing
-       and ghost removing, and if it has 0 children and its innerHTML length == 0, we'll remove it
-      */
-
-      var pTags = domCopy.querySelectorAll("p");
-      var pTagsToRemoveCandidates = [];
       var _iteratorNormalCompletion = true;
       var _didIteratorError = false;
       var _iteratorError = undefined;
 
       try {
-        for (var _iterator = pTags[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
-          var pTag = _step.value;
-          var numGhosts = pTag.querySelectorAll("[ghost]").length;
-          var numChildren = pTag.children.length;
+        for (var _iterator = mediaElements[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+          var file = _step.value;
+          var uuid = file.getAttribute('fsid');
+          var name = file.getAttribute('fsname');
+          var width = file.getAttribute('width');
+          var height = file.getAttribute('height');
+          var components = ["FileSafe", uuid, name];
 
-          if (numChildren == numGhosts) {
-            pTagsToRemoveCandidates.push(pTag);
+          if (width || height) {
+            var size = "".concat(width, "x").concat(height);
+            components.push(size);
           }
-        } // List of syntaxes we insert.
 
+          var fsSyntax = "<p>[".concat(components.join(":"), "]</p>");
+          file.insertAdjacentHTML('afterend', fsSyntax);
+          file.remove();
+        }
       } catch (err) {
         _didIteratorError = true;
         _iteratorError = err;
@@ -2061,68 +2070,9 @@ function () {
         }
       }
 
-      var insertedSyntaxes = [];
-      var _iteratorNormalCompletion2 = true;
-      var _didIteratorError2 = false;
-      var _iteratorError2 = undefined;
-
-      try {
-        for (var _iterator2 = mediaElements[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
-          var file = _step2.value;
-          var uuid = file.getAttribute('fsid');
-          var name = file.getAttribute('fsname');
-          var width = file.getAttribute('width');
-          var height = file.getAttribute('height');
-          var components = ["FileSafe", uuid, name];
-
-          if (width || height) {
-            var size = "".concat(width, "x").concat(height);
-            components.push(size);
-          }
-
-          var fsSyntax = "[".concat(components.join(":"), "]");
-          insertedSyntaxes.push(fsSyntax);
-          file.insertAdjacentText('afterend', fsSyntax);
-          file.remove();
-        }
-      } catch (err) {
-        _didIteratorError2 = true;
-        _iteratorError2 = err;
-      } finally {
-        try {
-          if (!_iteratorNormalCompletion2 && _iterator2["return"] != null) {
-            _iterator2["return"]();
-          }
-        } finally {
-          if (_didIteratorError2) {
-            throw _iteratorError2;
-          }
-        }
-      }
-
       var ghosts = domCopy.querySelectorAll("*[ghost]");
       ghosts.forEach(function (ghost) {
         ghost.remove();
-      });
-      pTagsToRemoveCandidates.forEach(function (pTag) {
-        // Make sure children count is still 0.
-        // If the elements inner html is equal to some fsSyntax we inserted,
-        // then we want to delete the p tag as well.
-        var innerHTML = pTag.innerHTML.trim();
-        var isEmpty = pTag.children.length == 0 && innerHTML.length == 0;
-        var isSyntaxContainer = insertedSyntaxes.includes(innerHTML);
-
-        if (isEmpty) {
-          pTag.remove();
-        } else if (isSyntaxContainer) {
-          // If the sole purpose of this <p> tag is to contain some fsSyntax,
-          // we'll get rid of the p tag and have the syntax stand on its own.
-          // This is due to the behavior of the Redactor editor that automatically wraps
-          // plaintext content in p tags, thus triggering a change event. If we remove the p tag,
-          // we can ensure content stays the same.
-          pTag.insertAdjacentText('afterend', innerHTML);
-          pTag.remove();
-        }
       });
       var result = domCopy.body.innerHTML;
       return result;

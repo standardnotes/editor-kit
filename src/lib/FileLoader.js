@@ -138,7 +138,7 @@ export default class FileLoader {
       mediaElement = this.createDownloadElement({url, fsid, fileType, fsname, fsElement});
     }
 
-    this.insertElementAdjacent(mediaElement, fsElement);
+    this.insertElementNearElement(mediaElement, fsElement);
 
     // Remove fsElement now that image is loaded
     fsElement.remove();
@@ -238,7 +238,7 @@ export default class FileLoader {
       element.setAttribute('contenteditable', false);
       element.setAttribute('style', 'font-weight: bold');
       element.textContent = status;
-      element = this.insertElementAdjacent(element, fsElement);
+      element = this.insertElementNearElement(element, fsElement);
       if(fsid) {
         this.statusElementMapping[fsid] = element;
       }
@@ -261,9 +261,23 @@ export default class FileLoader {
     }
   }
 
-  insertElementAdjacent(domNodeToInsert, adjacentToElement) {
+  insertElementNearElement(domNodeToInsert, inVicinityOfElement) {
     let processedElement = this.preprocessElement(domNodeToInsert);
-    this.insertElement(processedElement, adjacentToElement);
+
+    let insertionType = "child";
+    // <figure> tags cannot be nested inside p tags.
+    if(processedElement.tagName.toLowerCase() == "figure") {
+      // If we have a p ancestor, we need to get out.
+      let pAncestor = inVicinityOfElement.closest("p");
+      if(pAncestor) {
+        // p tags cannot be nested in other p tags, so if we found one, we know its parent isn't and doesn't belong to a ptag.
+        // add the new right after pAncestor
+        inVicinityOfElement = pAncestor;
+        insertionType = "afterend";
+      }
+    }
+    
+    this.insertElement(processedElement, inVicinityOfElement, insertionType);
     return processedElement;
   }
 
