@@ -483,7 +483,9 @@ function () {
         }
 
         if (allFileDescriptors.length > 0) {
-          _this2.fileLoader.loadFilesafeElements();
+          setTimeout(function () {
+            _this2.fileLoader.loadFilesafeElements();
+          }, 5000);
         }
       });
       this.filesafe.addNewFileDescriptorHandler(function (fileDescriptor) {
@@ -544,7 +546,19 @@ function () {
           return;
         }
 
-        var text = note.content.text; // Set before expanding. We want this value to always be the collapsed value
+        var text = note.content.text; // If we're an html editor, and we're dealing with a new note
+        // check to see if it's in html format.
+        // If it's not, we don't want to convert it to HTML until the user makes an explicit change
+        // So we'll ignore the next change event in this case
+
+        if (_this3.mode == "html" && isNewNoteLoad) {
+          var isHtml = /<[a-z][\s\S]*>/i.test(text);
+
+          if (!isHtml) {
+            _this3.ignoreNextTextChange = true;
+          }
+        } // Set before expanding. We want this value to always be the collapsed value
+
 
         _this3.previousText = text;
 
@@ -578,10 +592,14 @@ function () {
     value: function onEditorValueChanged(text) {
       var _this4 = this;
 
-      // console.log("onEditorValueChanged", text);
       if (this.needsFilesafeElementLoad) {
         this.needsFilesafeElementLoad = false;
         this.fileLoader.loadFilesafeElements();
+      }
+
+      if (this.ignoreNextTextChange) {
+        this.ignoreNextTextChange = false;
+        return;
       }
 
       if (this.supportsFilesafe) {
@@ -709,31 +727,40 @@ var ComponentManager = function () {
     value: function registerMessageHandler() {
       var _this = this;
 
-      var messageHandler = function messageHandler(event, mobileSource) {
+      var messageHandler = function messageHandler(event) {
         if (_this.loggingEnabled) {
-          console.log("Components API Message received:", event.data, "mobile?", mobileSource);
+          console.log("Components API Message received:", event.data);
         } // The first message will be the most reliable one, so we won't change it after any subsequent events,
         // in case you receive an event from another window.
 
 
         if (!_this.origin) {
           _this.origin = event.origin;
-        }
+        } // Mobile environment sends data as JSON string
 
-        _this.mobileSource = mobileSource; // If from mobile app, JSON needs to be used.
 
-        var data = mobileSource ? JSON.parse(event.data) : event.data;
+        var data = event.data;
+        var parsedData = typeof data === "string" ? JSON.parse(data) : data;
 
-        _this.handleMessage(data);
-      }; // Mobile (React Native) uses `document`, web/desktop uses `window`.addEventListener
-      // for postMessage API to work properly.
+        _this.handleMessage(parsedData);
+      };
+      /*
+        Mobile (React Native) uses `document`, web/desktop uses `window`.addEventListener
+        for postMessage API to work properly.
+         Update May 2019:
+        As part of transitioning React Native webview into the community package,
+        we'll now only need to use window.addEventListener.
+         However, we want to maintain backward compatibility for Mobile < v3.0.5, so we'll keep document.addEventListener
+         Also, even with the new version of react-native-webview, Android may still require document.addEventListener (while iOS still only requires window.addEventListener)
+        https://github.com/react-native-community/react-native-webview/issues/323#issuecomment-467767933
+       */
 
 
       document.addEventListener("message", function (event) {
-        messageHandler(event, true);
+        messageHandler(event);
       }, false);
       window.addEventListener("message", function (event) {
-        messageHandler(event, false);
+        messageHandler(event);
       }, false);
     }
   }, {
@@ -770,6 +797,11 @@ var ComponentManager = function () {
   }, {
     key: "onReady",
     value: function onReady(data) {
+      this.environment = data.environment;
+      this.platform = data.platform;
+      this.uuid = data.uuid;
+      this.isMobile = this.environment == "mobile";
+
       if (this.initialPermissions && this.initialPermissions.length > 0) {
         this.requestPermissions(this.initialPermissions);
       }
@@ -799,9 +831,6 @@ var ComponentManager = function () {
       }
 
       this.messageQueue = [];
-      this.environment = data.environment;
-      this.platform = data.platform;
-      this.uuid = data.uuid;
 
       if (this.loggingEnabled) {
         console.log("onReadyData", data);
@@ -867,7 +896,7 @@ var ComponentManager = function () {
       sentMessage.callback = callback;
       this.sentMessages.push(sentMessage); // Mobile (React Native) requires a string for the postMessage API.
 
-      if (this.mobileSource) {
+      if (this.isMobile) {
         message = JSON.stringify(message);
       }
 
@@ -1654,27 +1683,19 @@ function () {
       fsElement.remove();
       return true;
     }
-    /*
-      The below applies to img tags, but not video and audio tags. So we use this for video and audio elements only.
-      Redactor automatically includes figure elements for image, as part of this.preprocessElement
-      We'd like to wrap it in a figure ideally, but right now there is a bug where inserting
-      the figure element programatically, then entering to create new line after the figure,
-      inserts the paragraph text inside the figure element. We ignore this figure element
-      on saving to SN, so this text would be lost.
-     */
-
   }, {
-    key: "wrapElementInFigure",
-    value: function wrapElementInFigure(_ref3) {
+    key: "wrapElementInTag",
+    value: function wrapElementInTag(_ref3) {
       var element = _ref3.element,
+          tagName = _ref3.tagName,
           fsid = _ref3.fsid,
           fsname = _ref3.fsname;
-      var figure = document.createElement('figure');
-      figure.setAttribute('fsid', fsid);
-      figure.setAttribute('fsname', fsname);
-      figure.setAttribute('fscollapsable', true);
-      figure.append(element);
-      return figure;
+      var tag = document.createElement(tagName);
+      tag.setAttribute('fsid', fsid);
+      tag.setAttribute('fsname', fsname);
+      tag.setAttribute('fscollapsable', true);
+      tag.append(element);
+      return tag;
     }
   }, {
     key: "createImageElement",
@@ -1719,9 +1740,12 @@ function () {
       var source = document.createElement("source");
       source.setAttribute('src', url);
       source.setAttribute('type', fileType);
-      video.append(source);
-      return this.wrapElementInFigure({
+      video.append(source); // Redactor will automatically insert a video element in a p tag,
+      // so we'll do it ourselves so that we can control its attributes.
+
+      return this.wrapElementInTag({
         element: video,
+        tagName: "p",
         fsid: fsid,
         fsname: fsname
       });
@@ -1755,12 +1779,12 @@ function () {
       audio.setAttribute('fsid', fsid);
       audio.setAttribute('fsname', fsname);
       audio.setAttribute('fscollapsable', true);
-      return this.wrapElementInFigure({
+      return this.wrapElementInTag({
         element: audio,
+        tagName: "p",
         fsid: fsid,
         fsname: fsname
       });
-      ;
     }
   }, {
     key: "setStatus",
@@ -1775,7 +1799,7 @@ function () {
       }
 
       if (status) {
-        var element = document.createElement('span');
+        var element = document.createElement('p');
         element.setAttribute('id', fsid);
         element.setAttribute('ghost', 'true');
         element.setAttribute('contenteditable', false);

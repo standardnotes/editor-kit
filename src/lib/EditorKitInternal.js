@@ -81,7 +81,9 @@ export default class EditorKit {
       }
 
       if(allFileDescriptors.length > 0) {
-        this.fileLoader.loadFilesafeElements();
+        setTimeout(() => {
+          this.fileLoader.loadFilesafeElements();
+        }, 5000);
       }
     });
 
@@ -143,6 +145,17 @@ export default class EditorKit {
 
       let text = note.content.text;
 
+      // If we're an html editor, and we're dealing with a new note
+      // check to see if it's in html format.
+      // If it's not, we don't want to convert it to HTML until the user makes an explicit change
+      // So we'll ignore the next change event in this case
+      if(this.mode == "html" && isNewNoteLoad)  {
+        let isHtml = /<[a-z][\s\S]*>/i.test(text);
+        if(!isHtml) {
+          this.ignoreNextTextChange = true;
+        }
+      }
+
       // Set before expanding. We want this value to always be the collapsed value
       this.previousText = text;
 
@@ -166,10 +179,14 @@ export default class EditorKit {
   }
 
   onEditorValueChanged(text) {
-    // console.log("onEditorValueChanged", text);
     if(this.needsFilesafeElementLoad) {
        this.needsFilesafeElementLoad = false;
        this.fileLoader.loadFilesafeElements();
+    }
+
+    if(this.ignoreNextTextChange) {
+      this.ignoreNextTextChange = false;
+      return;
     }
 
     if(this.supportsFilesafe) {

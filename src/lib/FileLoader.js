@@ -146,21 +146,13 @@ export default class FileLoader {
     return true;
   }
 
-  /*
-    The below applies to img tags, but not video and audio tags. So we use this for video and audio elements only.
-    Redactor automatically includes figure elements for image, as part of this.preprocessElement
-    We'd like to wrap it in a figure ideally, but right now there is a bug where inserting
-    the figure element programatically, then entering to create new line after the figure,
-    inserts the paragraph text inside the figure element. We ignore this figure element
-    on saving to SN, so this text would be lost.
-   */
-  wrapElementInFigure({element, fsid, fsname}) {
-    let figure = document.createElement('figure');
-    figure.setAttribute('fsid', fsid);
-    figure.setAttribute('fsname', fsname);
-    figure.setAttribute('fscollapsable', true);
-    figure.append(element);
-    return figure;
+  wrapElementInTag({element, tagName, fsid, fsname}) {
+    let tag = document.createElement(tagName);
+    tag.setAttribute('fsid', fsid);
+    tag.setAttribute('fsname', fsname);
+    tag.setAttribute('fscollapsable', true);
+    tag.append(element);
+    return tag;
   }
 
   createImageElement({url, fsid, fsname, fsElement}) {
@@ -197,7 +189,10 @@ export default class FileLoader {
     source.setAttribute('type', fileType);
 
     video.append(source);
-    return this.wrapElementInFigure({element: video, fsid, fsname});
+
+    // Redactor will automatically insert a video element in a p tag,
+    // so we'll do it ourselves so that we can control its attributes.
+    return this.wrapElementInTag({element: video, tagName: "p", fsid, fsname});
   }
 
   createDownloadElement({url, fsid, fileType, fsname, fsElement}) {
@@ -219,7 +214,7 @@ export default class FileLoader {
     audio.setAttribute('fsname', fsname);
     audio.setAttribute('fscollapsable', true);
 
-    return this.wrapElementInFigure({element: audio, fsid, fsname});;
+    return this.wrapElementInTag({element: audio, tagName: "p", fsid, fsname});
   }
 
   setStatus(status, fsElement, fsid) {
@@ -232,7 +227,7 @@ export default class FileLoader {
     }
 
     if(status) {
-      let element = document.createElement('span');
+      let element = document.createElement('p');
       element.setAttribute('id', fsid);
       element.setAttribute('ghost', 'true');
       element.setAttribute('contenteditable', false);
@@ -276,7 +271,7 @@ export default class FileLoader {
         insertionType = "afterend";
       }
     }
-    
+
     this.insertElement(processedElement, inVicinityOfElement, insertionType);
     return processedElement;
   }
