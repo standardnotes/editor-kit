@@ -622,7 +622,9 @@ function () {
           note.content.text = text;
 
           if (_this4.mode == 'html') {
-            note.content.preview_plain = __WEBPACK_IMPORTED_MODULE_1__Util_js__["a" /* default */].truncateString(__WEBPACK_IMPORTED_MODULE_1__Util_js__["a" /* default */].htmlToText(text));
+            var preview = __WEBPACK_IMPORTED_MODULE_4__FilesafeHtml_js__["a" /* default */].removeFilesafeSyntaxFromHtml(text);
+            preview = __WEBPACK_IMPORTED_MODULE_1__Util_js__["a" /* default */].truncateString(__WEBPACK_IMPORTED_MODULE_1__Util_js__["a" /* default */].htmlToText(preview));
+            note.content.preview_plain = preview;
           } else {
             note.content.preview_plain = null;
           }
@@ -1517,7 +1519,7 @@ function () {
                   break;
                 }
 
-                this.setStatus("Unable to find file.", fsElement, fsid);
+                this.setStatus("Unable to find file ".concat(fsid, "."), fsElement, fsid, fsname, true);
                 console.log("Can't find descriptor with id", fsid);
                 return _context.abrupt("return", {
                   success: false
@@ -1543,14 +1545,14 @@ function () {
                 };
 
                 this.currentlyLoadingIds.push(fsid);
-                this.setStatus("Downloading file...", fsElement, fsid);
+                this.setStatus("Downloading file...", fsElement, fsid, fsname);
                 _context.next = 23;
                 return __WEBPACK_IMPORTED_MODULE_0__Util_js__["a" /* default */].sleep(0.05);
 
               case 23:
                 _context.next = 25;
                 return this.filesafe.downloadFileFromDescriptor(descriptor)["catch"](function (downloadError) {
-                  _this.setStatus("Unable to download file.", fsElement, fsid);
+                  _this.setStatus("Unable to download file ".concat(fsid, "."), fsElement, fsid, fsname);
 
                   return;
                 });
@@ -1566,7 +1568,7 @@ function () {
                 return _context.abrupt("return");
 
               case 28:
-                this.setStatus("Decrypting file...", fsElement, fsid);
+                this.setStatus("Decrypting file...", fsElement, fsid, fsname);
                 _context.next = 31;
                 return __WEBPACK_IMPORTED_MODULE_0__Util_js__["a" /* default */].sleep(0.05);
 
@@ -1576,7 +1578,7 @@ function () {
                   fileDescriptor: descriptor,
                   fileItem: fileItem
                 })["catch"](function (decryptError) {
-                  _this.setStatus("Unable to decrypt file.", fsElement, fsid);
+                  _this.setStatus("Unable to decrypt file ".concat(fsid, "."), fsElement, fsid, fsname);
 
                   return;
                 });
@@ -1694,6 +1696,14 @@ function () {
       tag.setAttribute('fsid', fsid);
       tag.setAttribute('fsname', fsname);
       tag.setAttribute('fscollapsable', true);
+      tag.setAttribute('contenteditable', true);
+      tag.append(element);
+      return tag;
+    }
+  }, {
+    key: "basicwrapElementInTag",
+    value: function basicwrapElementInTag(element, tagName) {
+      var tag = document.createElement(tagName);
       tag.append(element);
       return tag;
     }
@@ -1788,7 +1798,7 @@ function () {
     }
   }, {
     key: "setStatus",
-    value: function setStatus(status, fsElement, fsid) {
+    value: function setStatus(status, fsElement, fsid, fsname, removable) {
       if (fsid) {
         var existingStatusElement = this.statusElementMapping[fsid];
 
@@ -1799,12 +1809,17 @@ function () {
       }
 
       if (status) {
-        var element = document.createElement('p');
+        var element = document.createElement('label');
         element.setAttribute('id', fsid);
         element.setAttribute('ghost', 'true');
         element.setAttribute('contenteditable', false);
-        element.setAttribute('style', 'font-weight: bold');
+        element.style.fontWeight = "bold";
         element.textContent = status;
+
+        if (removable) {
+          element.style.userSelect = "all";
+        }
+
         element = this.insertElementNearElement(element, fsElement);
 
         if (fsid) {
@@ -2016,6 +2031,13 @@ function () {
         return _this.filesafeSyntaxToHtmlElement(match);
       });
       return result;
+    }
+  }, {
+    key: "removeFilesafeSyntaxFromHtml",
+    value: function removeFilesafeSyntaxFromHtml(html) {
+      return html.replace(this.FilesafeSyntaxPattern, function (match) {
+        return "";
+      });
     }
   }, {
     key: "insertionSyntaxForFileDescriptor",

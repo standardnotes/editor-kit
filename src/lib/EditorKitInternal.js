@@ -208,7 +208,9 @@ export default class EditorKit {
       this.componentManager.saveItemWithPresave(note, () => {
         note.content.text = text;
         if(this.mode == 'html')  {
-          note.content.preview_plain = Util.truncateString(Util.htmlToText(text));
+          let preview = FilesafeHtml.removeFilesafeSyntaxFromHtml(text);
+          preview = Util.truncateString(Util.htmlToText(preview));
+          note.content.preview_plain = preview;
         } else {
           note.content.preview_plain = null;
         }

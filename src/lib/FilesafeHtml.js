@@ -16,6 +16,12 @@ export default class FilesafeHtml {
     return result;
   }
 
+  static removeFilesafeSyntaxFromHtml(html) {
+    return html.replace(this.FilesafeSyntaxPattern, (match) => {
+      return "";
+    })
+  }
+
   static insertionSyntaxForFileDescriptor(descriptor) {
     return `[FileSafe:${descriptor.uuid}:${descriptor.content.fileName}]`;
   }

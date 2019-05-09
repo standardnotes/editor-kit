@@ -67,7 +67,7 @@ export default class FileLoader {
 
     let descriptor = this.filesafe.findFileDescriptor(fsid);
     if(!descriptor) {
-      this.setStatus("Unable to find file.", fsElement, fsid);
+      this.setStatus(`Unable to find file ${fsid}.`, fsElement, fsid, fsname, true);
       console.log("Can't find descriptor with id", fsid);
       return {success: false};
     }
@@ -85,10 +85,10 @@ export default class FileLoader {
 
     this.currentlyLoadingIds.push(fsid);
 
-    this.setStatus("Downloading file...", fsElement, fsid);
+    this.setStatus("Downloading file...", fsElement, fsid, fsname);
     await Util.sleep(0.05); // Allow UI to update before beginning download
     let fileItem = await this.filesafe.downloadFileFromDescriptor(descriptor).catch((downloadError) => {
-      this.setStatus("Unable to download file.", fsElement, fsid);
+      this.setStatus(`Unable to download file ${fsid}.`, fsElement, fsid, fsname);
       return;
     })
 
@@ -96,10 +96,10 @@ export default class FileLoader {
       return;
     }
 
-    this.setStatus("Decrypting file...", fsElement, fsid);
+    this.setStatus("Decrypting file...", fsElement, fsid, fsname);
     await Util.sleep(0.05); // Allow UI to update before beginning decryption
     let data = await this.filesafe.decryptFile({fileDescriptor: descriptor, fileItem: fileItem}).catch((decryptError) => {
-      this.setStatus("Unable to decrypt file.", fsElement, fsid);
+      this.setStatus(`Unable to decrypt file ${fsid}.`, fsElement, fsid, fsname);
       return;
     });
 
@@ -151,6 +151,13 @@ export default class FileLoader {
     tag.setAttribute('fsid', fsid);
     tag.setAttribute('fsname', fsname);
     tag.setAttribute('fscollapsable', true);
+    tag.setAttribute('contenteditable', true);
+    tag.append(element);
+    return tag;
+  }
+
+  basicwrapElementInTag(element, tagName) {
+    let tag = document.createElement(tagName);
     tag.append(element);
     return tag;
   }
@@ -217,7 +224,7 @@ export default class FileLoader {
     return this.wrapElementInTag({element: audio, tagName: "p", fsid, fsname});
   }
 
-  setStatus(status, fsElement, fsid) {
+  setStatus(status, fsElement, fsid, fsname, removable) {
     if(fsid) {
       let existingStatusElement = this.statusElementMapping[fsid];
       if(existingStatusElement) {
@@ -227,13 +234,18 @@ export default class FileLoader {
     }
 
     if(status) {
-      let element = document.createElement('p');
+      let element = document.createElement('label');
       element.setAttribute('id', fsid);
       element.setAttribute('ghost', 'true');
       element.setAttribute('contenteditable', false);
-      element.setAttribute('style', 'font-weight: bold');
+      element.style.fontWeight = "bold";
       element.textContent = status;
+      if(removable) {
+        element.style.userSelect = "all";
+      }
+
       element = this.insertElementNearElement(element, fsElement);
+
       if(fsid) {
         this.statusElementMapping[fsid] = element;
       }
