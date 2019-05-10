@@ -14,7 +14,7 @@ export default class EditorKitDelegate {
 
   constructor({insertRawText, onReceiveNote,
     setEditorRawText, getCurrentLineText, getPreviousLineText, replaceText,
-    getElementsBySelector, insertElement, preprocessElement, clearUndoHistory}) {
+    getElementsBySelector, insertElement, preprocessElement, clearUndoHistory, generateCustomPreview}) {
     this.insertRawText = insertRawText;
     this.onReceiveNote = onReceiveNote;
     this.setEditorRawText = setEditorRawText;
@@ -25,6 +25,9 @@ export default class EditorKitDelegate {
     this.insertElement = insertElement;
     this.preprocessElement = preprocessElement;
     this.clearUndoHistory = clearUndoHistory;
+
+    // Takes in string parameter, return object {html: string, plain: string}
+    this.generateCustomPreview = generateCustomPreview;
   }
 
 }

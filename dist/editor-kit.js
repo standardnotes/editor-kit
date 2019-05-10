@@ -621,12 +621,22 @@ function () {
         this.componentManager.saveItemWithPresave(note, function () {
           note.content.text = text;
 
-          if (_this4.mode == 'html') {
-            var preview = __WEBPACK_IMPORTED_MODULE_4__FilesafeHtml_js__["a" /* default */].removeFilesafeSyntaxFromHtml(text);
-            preview = __WEBPACK_IMPORTED_MODULE_1__Util_js__["a" /* default */].truncateString(__WEBPACK_IMPORTED_MODULE_1__Util_js__["a" /* default */].htmlToText(preview));
-            note.content.preview_plain = preview;
+          if (_this4.delegate.generateCustomPreview) {
+            var result = _this4.delegate.generateCustomPreview(text);
+
+            if (result.html) {
+              note.content.preview_html = result.html;
+            } else if (result.plain) {
+              note.content.preview_plain = result.plain;
+            }
           } else {
-            note.content.preview_plain = null;
+            if (_this4.mode == 'html') {
+              var preview = __WEBPACK_IMPORTED_MODULE_4__FilesafeHtml_js__["a" /* default */].removeFilesafeSyntaxFromHtml(text);
+              preview = __WEBPACK_IMPORTED_MODULE_1__Util_js__["a" /* default */].truncateString(__WEBPACK_IMPORTED_MODULE_1__Util_js__["a" /* default */].htmlToText(preview));
+              note.content.preview_plain = preview;
+            } else {
+              note.content.preview_plain = null;
+            }
           }
         });
       }
@@ -2167,7 +2177,8 @@ var EditorKitDelegate = function EditorKitDelegate(_ref) {
       getElementsBySelector = _ref.getElementsBySelector,
       insertElement = _ref.insertElement,
       preprocessElement = _ref.preprocessElement,
-      clearUndoHistory = _ref.clearUndoHistory;
+      clearUndoHistory = _ref.clearUndoHistory,
+      generateCustomPreview = _ref.generateCustomPreview;
 
   _classCallCheck(this, EditorKitDelegate);
 
@@ -2180,7 +2191,9 @@ var EditorKitDelegate = function EditorKitDelegate(_ref) {
   this.getElementsBySelector = getElementsBySelector;
   this.insertElement = insertElement;
   this.preprocessElement = preprocessElement;
-  this.clearUndoHistory = clearUndoHistory;
+  this.clearUndoHistory = clearUndoHistory; // Takes in string parameter, return object {html: string, plain: string}
+
+  this.generateCustomPreview = generateCustomPreview;
 };
 
 

@@ -207,12 +207,22 @@ export default class EditorKit {
     if(note) {
       this.componentManager.saveItemWithPresave(note, () => {
         note.content.text = text;
-        if(this.mode == 'html')  {
-          let preview = FilesafeHtml.removeFilesafeSyntaxFromHtml(text);
-          preview = Util.truncateString(Util.htmlToText(preview));
-          note.content.preview_plain = preview;
-        } else {
-          note.content.preview_plain = null;
+        if(this.delegate.generateCustomPreview) {
+          let result = this.delegate.generateCustomPreview(text);
+          if(result.html) {
+            note.content.preview_html = result.html;
+          } else if(result.plain) {
+            note.content.preview_plain = result.plain;
+          }
+        }
+        else {
+          if(this.mode == 'html')  {
+            let preview = FilesafeHtml.removeFilesafeSyntaxFromHtml(text);
+            preview = Util.truncateString(Util.htmlToText(preview));
+            note.content.preview_plain = preview;
+          } else {
+            note.content.preview_plain = null;
+          }
         }
       });
     }
