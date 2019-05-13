@@ -207,18 +207,25 @@ export default class EditorKit {
           let result = this.delegate.generateCustomPreview(text);
           if(result.html) {
             note.content.preview_html = result.html;
+            note.content.preview_plain = null;
           } else if(result.plain) {
             note.content.preview_plain = result.plain;
+            note.content.preview_html = null;
           }
         }
         else {
           if(this.mode == 'html')  {
             let preview = FilesafeHtml.removeFilesafeSyntaxFromHtml(text);
             preview = Util.truncateString(Util.htmlToText(preview));
-            note.content.preview_plain = preview;
+            // If the preview has no length due to either being an empty note, or having just 1 FileSafe file
+            // that is stripped above, then we don't want to set to empty string, otherwise SN app will default to content
+            // for preview. We'll set a whitespace preview instead so SN doesn't go based on innate content.
+            note.content.preview_plain = preview.length > 0 ? preview : " ";
           } else {
-            note.content.preview_plain = null;
+            note.content.preview_plain = text;
           }
+          // We're only using plain in this block.
+          note.content.preview_html = null;
         }
       });
     }

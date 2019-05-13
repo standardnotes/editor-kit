@@ -621,17 +621,25 @@ function () {
 
             if (result.html) {
               note.content.preview_html = result.html;
+              note.content.preview_plain = null;
             } else if (result.plain) {
               note.content.preview_plain = result.plain;
+              note.content.preview_html = null;
             }
           } else {
             if (_this4.mode == 'html') {
               var preview = __WEBPACK_IMPORTED_MODULE_4__FilesafeHtml_js__["a" /* default */].removeFilesafeSyntaxFromHtml(text);
-              preview = __WEBPACK_IMPORTED_MODULE_1__Util_js__["a" /* default */].truncateString(__WEBPACK_IMPORTED_MODULE_1__Util_js__["a" /* default */].htmlToText(preview));
-              note.content.preview_plain = preview;
+              preview = __WEBPACK_IMPORTED_MODULE_1__Util_js__["a" /* default */].truncateString(__WEBPACK_IMPORTED_MODULE_1__Util_js__["a" /* default */].htmlToText(preview)); // If the preview has no length due to either being an empty note, or having just 1 FileSafe file
+              // that is stripped above, then we don't want to set to empty string, otherwise SN app will default to content
+              // for preview. We'll set a whitespace preview instead so SN doesn't go based on innate content.
+
+              note.content.preview_plain = preview.length > 0 ? preview : " ";
             } else {
-              note.content.preview_plain = null;
-            }
+              note.content.preview_plain = text;
+            } // We're only using plain in this block.
+
+
+            note.content.preview_html = null;
           }
         });
       }
