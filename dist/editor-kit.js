@@ -446,9 +446,6 @@ function () {
               }
 
               hasMatch = true;
-              descriptor.addItemAsRelationship(_this2.note);
-
-              _this2.componentManager.saveItem(descriptor);
 
               _this2.fileIdsPendingAssociation.splice(_this2.fileIdsPendingAssociation.indexOf(uuid), 1);
 
@@ -483,9 +480,7 @@ function () {
         }
 
         if (allFileDescriptors.length > 0) {
-          setTimeout(function () {
-            _this2.fileLoader.loadFilesafeElements();
-          }, 5000);
+          _this2.fileLoader.loadFilesafeElements();
         }
       });
       this.filesafe.addNewFileDescriptorHandler(function (fileDescriptor) {
@@ -1490,17 +1485,18 @@ function () {
       regeneratorRuntime.mark(function _callee(fsElement) {
         var _this = this;
 
-        var fsid, fsname, existingMapping, descriptor, selectorSyntax, existingElements, cleanup, fileItem, data, fileType, tempUrl;
+        var fsid, fsname, fileNameDisplay, existingMapping, descriptor, selectorSyntax, existingElements, cleanup, fileItem, data, fileType, tempUrl;
         return regeneratorRuntime.wrap(function _callee$(_context) {
           while (1) {
             switch (_context.prev = _context.next) {
               case 0:
                 fsid = fsElement.getAttribute("fsid");
                 fsname = fsElement.getAttribute("fsname");
+                fileNameDisplay = !fsname || fsname == 'undefined' ? 'file' : fsname;
                 existingMapping = this.uuidToFileTempUrlAndTypeMapping[fsid];
 
                 if (!existingMapping) {
-                  _context.next = 6;
+                  _context.next = 7;
                   break;
                 }
 
@@ -1513,15 +1509,15 @@ function () {
                 });
                 return _context.abrupt("return");
 
-              case 6:
+              case 7:
                 if (!this.currentlyLoadingIds.includes(fsid)) {
-                  _context.next = 8;
+                  _context.next = 9;
                   break;
                 }
 
                 return _context.abrupt("return");
 
-              case 8:
+              case 9:
                 descriptor = this.filesafe.findFileDescriptor(fsid);
 
                 if (descriptor) {
@@ -1529,8 +1525,7 @@ function () {
                   break;
                 }
 
-                this.setStatus("Unable to find file ".concat(fsid, "."), fsElement, fsid, fsname, true);
-                console.log("Can't find descriptor with id", fsid);
+                this.setStatus("Unable to find ".concat(fileNameDisplay, " ").concat(fsid, "."), fsElement, fsid, fsname, true);
                 return _context.abrupt("return", {
                   success: false
                 });
@@ -1540,76 +1535,75 @@ function () {
                 existingElements = document.querySelectorAll("img".concat(selectorSyntax, ", figure").concat(selectorSyntax, ", video").concat(selectorSyntax, ", audio").concat(selectorSyntax));
 
                 if (!(existingElements.length > 0)) {
-                  _context.next = 18;
+                  _context.next = 17;
                   break;
                 }
 
-                console.log("File already exists");
                 return _context.abrupt("return", {
                   success: false
                 });
 
-              case 18:
+              case 17:
                 cleanup = function cleanup() {
                   _this.currentlyLoadingIds.splice(_this.currentlyLoadingIds.indexOf(fsid), 1);
                 };
 
                 this.currentlyLoadingIds.push(fsid);
-                this.setStatus("Downloading file...", fsElement, fsid, fsname);
-                _context.next = 23;
+                this.setStatus("Downloading ".concat(fileNameDisplay, "..."), fsElement, fsid, fsname);
+                _context.next = 22;
                 return __WEBPACK_IMPORTED_MODULE_0__Util_js__["a" /* default */].sleep(0.05);
 
-              case 23:
-                _context.next = 25;
+              case 22:
+                _context.next = 24;
                 return this.filesafe.downloadFileFromDescriptor(descriptor)["catch"](function (downloadError) {
-                  _this.setStatus("Unable to download file ".concat(fsid, "."), fsElement, fsid, fsname);
+                  _this.setStatus("Unable to download ".concat(fileNameDisplay, " ").concat(fsid, "."), fsElement, fsid, fsname);
 
                   return;
                 });
 
-              case 25:
+              case 24:
                 fileItem = _context.sent;
 
                 if (fileItem) {
-                  _context.next = 28;
+                  _context.next = 27;
                   break;
                 }
 
                 return _context.abrupt("return");
 
-              case 28:
-                this.setStatus("Decrypting file...", fsElement, fsid, fsname);
-                _context.next = 31;
+              case 27:
+                this.setStatus("Decrypting ".concat(fileNameDisplay, "..."), fsElement, fsid, fsname);
+                _context.next = 30;
                 return __WEBPACK_IMPORTED_MODULE_0__Util_js__["a" /* default */].sleep(0.05);
 
-              case 31:
-                _context.next = 33;
+              case 30:
+                _context.next = 32;
                 return this.filesafe.decryptFile({
                   fileDescriptor: descriptor,
                   fileItem: fileItem
                 })["catch"](function (decryptError) {
-                  _this.setStatus("Unable to decrypt file ".concat(fsid, "."), fsElement, fsid, fsname);
+                  _this.setStatus("Unable to decrypt ".concat(fileNameDisplay, " ").concat(fsid, "."), fsElement, fsid, fsname);
 
                   return;
                 });
 
-              case 33:
+              case 32:
                 data = _context.sent;
 
                 if (data) {
-                  _context.next = 36;
+                  _context.next = 35;
                   break;
                 }
 
                 return _context.abrupt("return");
 
-              case 36:
+              case 35:
                 // Remove loading text
                 this.setStatus(null, fsElement, fsid);
-                _context.next = 39;
+                _context.next = 38;
                 return __WEBPACK_IMPORTED_MODULE_0__Util_js__["a" /* default */].sleep(0.05);
 
-              case 39:
+              case 38:
                 // Allow UI to update before adding image
                 // Generate temporary url, must be released later
                 fileType = descriptor.content.fileType;
@@ -1634,7 +1628,7 @@ function () {
                   success: true
                 });
 
-              case 45:
+              case 44:
               case "end":
                 return _context.stop();
             }

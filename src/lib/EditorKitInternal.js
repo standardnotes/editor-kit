@@ -67,8 +67,6 @@ export default class EditorKit {
           }
 
           hasMatch = true;
-          descriptor.addItemAsRelationship(this.note);
-          this.componentManager.saveItem(descriptor);
           this.fileIdsPendingAssociation.splice(this.fileIdsPendingAssociation.indexOf(uuid), 1);
 
           let syntax = FilesafeHtml.insertionSyntaxForFileDescriptor(descriptor);
@@ -81,9 +79,7 @@ export default class EditorKit {
       }
 
       if(allFileDescriptors.length > 0) {
-        setTimeout(() => {
-          this.fileLoader.loadFilesafeElements();
-        }, 5000);
+        this.fileLoader.loadFilesafeElements();
       }
     });
 

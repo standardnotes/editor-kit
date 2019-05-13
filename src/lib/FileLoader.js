@@ -53,6 +53,7 @@ export default class FileLoader {
   async loadFilesafeElement(fsElement) {
     let fsid = fsElement.getAttribute("fsid");
     let fsname = fsElement.getAttribute("fsname");
+    let fileNameDisplay = (!fsname || fsname == 'undefined') ? 'file' :  fsname;
 
     let existingMapping = this.uuidToFileTempUrlAndTypeMapping[fsid];
     if(existingMapping) {
@@ -67,15 +68,13 @@ export default class FileLoader {
 
     let descriptor = this.filesafe.findFileDescriptor(fsid);
     if(!descriptor) {
-      this.setStatus(`Unable to find file ${fsid}.`, fsElement, fsid, fsname, true);
-      console.log("Can't find descriptor with id", fsid);
+      this.setStatus(`Unable to find ${fileNameDisplay} ${fsid}.`, fsElement, fsid, fsname, true);
       return {success: false};
     }
 
     let selectorSyntax = `[fsid="${descriptor.uuid}"][fscollapsable]`;
     var existingElements = document.querySelectorAll(`img${selectorSyntax}, figure${selectorSyntax}, video${selectorSyntax}, audio${selectorSyntax}`);
     if(existingElements.length > 0) {
-      console.log("File already exists");
       return {success: false};
     }
 
@@ -85,10 +84,10 @@ export default class FileLoader {
 
     this.currentlyLoadingIds.push(fsid);
 
-    this.setStatus("Downloading file...", fsElement, fsid, fsname);
+    this.setStatus(`Downloading ${fileNameDisplay}...`, fsElement, fsid, fsname);
     await Util.sleep(0.05); // Allow UI to update before beginning download
     let fileItem = await this.filesafe.downloadFileFromDescriptor(descriptor).catch((downloadError) => {
-      this.setStatus(`Unable to download file ${fsid}.`, fsElement, fsid, fsname);
+      this.setStatus(`Unable to download ${fileNameDisplay} ${fsid}.`, fsElement, fsid, fsname);
       return;
     })
 
@@ -96,10 +95,10 @@ export default class FileLoader {
       return;
     }
 
-    this.setStatus("Decrypting file...", fsElement, fsid, fsname);
+    this.setStatus(`Decrypting ${fileNameDisplay}...`, fsElement, fsid, fsname);
     await Util.sleep(0.05); // Allow UI to update before beginning decryption
     let data = await this.filesafe.decryptFile({fileDescriptor: descriptor, fileItem: fileItem}).catch((decryptError) => {
-      this.setStatus(`Unable to decrypt file ${fsid}.`, fsElement, fsid, fsname);
+      this.setStatus(`Unable to decrypt ${fileNameDisplay} ${fsid}.`, fsElement, fsid, fsname);
       return;
     });
 
