@@ -2077,7 +2077,7 @@ function () {
       // wrap it in a p tag, causing littered p tags remaining in the plaintext representation.
 
 
-      var result = "<p fsplaceholder=true style='display: none;' fscollapsable=true ghost=true fsid=".concat(uuid, " fsname=").concat(name, " ").concat(sizeString, "></p>");
+      var result = "<p fsplaceholder=true style='display: none;' fscollapsable=true ghost=true fsid='".concat(uuid, "' fsname='").concat(name, "' ").concat(sizeString, "></p>");
       return result;
     }
     /*

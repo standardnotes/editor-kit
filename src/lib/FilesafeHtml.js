@@ -43,7 +43,7 @@ export default class FilesafeHtml {
     }
     // We use a p tag here because if try something custom, like `filesafe` tag, the editor will automatically
     // wrap it in a p tag, causing littered p tags remaining in the plaintext representation.
-    let result = `<p fsplaceholder=true style='display: none;' fscollapsable=true ghost=true fsid=${uuid} fsname=${name} ${sizeString}></p>`;
+    let result = `<p fsplaceholder=true style='display: none;' fscollapsable=true ghost=true fsid='${uuid}' fsname='${name}' ${sizeString}></p>`;
     return result;
   }
 
