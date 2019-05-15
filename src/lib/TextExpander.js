@@ -9,8 +9,8 @@ export default class TextExpander {
     this.replaceText = replaceText;
   }
 
-  onKeyUp({key, isSpace, isEnter}) {
-    if(isSpace || isEnter) {
+  onKeyUp({key, isSpace, isEnter, isPaste}) {
+    if(isSpace || isEnter ||  isPaste) {
       this.searchPatterns({searchPreviousLine: isEnter});
     }
   }

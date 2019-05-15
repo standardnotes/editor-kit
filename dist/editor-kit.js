@@ -230,6 +230,15 @@ function () {
       });
     }
     /*
+      Called by consumer when user pastes into editor
+    */
+
+  }, {
+    key: "onEditorPaste",
+    value: function onEditorPaste() {
+      this.internal.onEditorPaste();
+    }
+    /*
       Whether or not filesafe is configured with integrations and keys, and can handle file uploads.
       If not, user should open files modal and configure FileSafe.
     */
@@ -580,6 +589,13 @@ function () {
         key: key,
         isSpace: isSpace,
         isEnter: isEnter
+      });
+    }
+  }, {
+    key: "onEditorPaste",
+    value: function onEditorPaste() {
+      this.textExpander.onKeyUp({
+        isPaste: true
       });
     }
   }, {
@@ -1925,9 +1941,10 @@ function () {
     value: function onKeyUp(_ref2) {
       var key = _ref2.key,
           isSpace = _ref2.isSpace,
-          isEnter = _ref2.isEnter;
+          isEnter = _ref2.isEnter,
+          isPaste = _ref2.isPaste;
 
-      if (isSpace || isEnter) {
+      if (isSpace || isEnter || isPaste) {
         this.searchPatterns({
           searchPreviousLine: isEnter
         });

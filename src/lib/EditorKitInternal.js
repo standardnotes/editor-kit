@@ -174,6 +174,10 @@ export default class EditorKit {
     this.textExpander.onKeyUp({key, isSpace, isEnter});
   }
 
+  onEditorPaste() {
+    this.textExpander.onKeyUp({isPaste: true});
+  }
+
   onEditorValueChanged(text) {
     if(this.needsFilesafeElementLoad) {
        this.needsFilesafeElementLoad = false;
