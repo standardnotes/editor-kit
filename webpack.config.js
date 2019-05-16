@@ -1,6 +1,7 @@
 var path = require('path');
 var webpack = require('webpack');
 const uglifyJsPlugin = webpack.optimize.UglifyJsPlugin;
+const CopyWebpackPlugin = require('copy-webpack-plugin');
 
 module.exports = {
     entry: {
@@ -32,6 +33,9 @@ module.exports = {
         include: /\.min\.js$/,
         minimize: true
       }),
+      new CopyWebpackPlugin([
+        { from: './node_modules/filesafe-js/dist/filesafe-js/EncryptionWorker.js', to: 'filesafe-js/EncryptionWorker.js' },
+      ])
     ],
     devtool: 'source-map'
 };
