@@ -128,7 +128,6 @@ export default class EditorKit {
         isNewNoteLoad = false;
       }
 
-
       if(this.supportsFilesafe)  {
         let itemClass = this.FilesafeClass.getSFItemClass();
         this.note = new itemClass(note);
