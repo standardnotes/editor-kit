@@ -531,18 +531,20 @@ function () {
       this.componentManager.coallesedSavingDelay = this.coallesedSavingDelay;
       this.componentManager.streamContextItem(function (note) {
         // Todo: if note has changed, release previous temp object urls
-        var itemClass = _this3.FilesafeClass.getSFItemClass();
-
         var isNewNoteLoad = true;
 
         if (_this3.note && _this3.note.uuid == note.uuid) {
           isNewNoteLoad = false;
         }
 
-        _this3.note = new itemClass(note);
-
         if (_this3.supportsFilesafe) {
+          var itemClass = _this3.FilesafeClass.getSFItemClass();
+
+          _this3.note = new itemClass(note);
+
           _this3.filesafe.setCurrentNote(_this3.note);
+        } else {
+          _this3.note = note;
         } // Only update UI on non-metadata updates.
 
 

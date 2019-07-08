@@ -123,17 +123,19 @@ export default class EditorKit {
 
     this.componentManager.streamContextItem((note) => {
       // Todo: if note has changed, release previous temp object urls
-      let itemClass = this.FilesafeClass.getSFItemClass();
-
       let isNewNoteLoad = true;
       if(this.note && this.note.uuid == note.uuid) {
         isNewNoteLoad = false;
       }
 
-      this.note = new itemClass(note);
 
       if(this.supportsFilesafe)  {
+        let itemClass = this.FilesafeClass.getSFItemClass();
+        this.note = new itemClass(note);
+
         this.filesafe.setCurrentNote(this.note);
+      } else {
+        this.note = note;
       }
 
        // Only update UI on non-metadata updates.
