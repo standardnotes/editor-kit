@@ -212,10 +212,9 @@ export default class EditorKit {
           let result = this.delegate.generateCustomPreview(text);
           if(result.html) {
             note.content.preview_html = result.html;
-            note.content.preview_plain = null;
-          } else if(result.plain) {
+          }
+          if(result.plain) {
             note.content.preview_plain = result.plain;
-            note.content.preview_html = null;
           }
         }
         else {

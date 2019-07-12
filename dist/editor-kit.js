@@ -639,10 +639,10 @@ function () {
 
             if (result.html) {
               note.content.preview_html = result.html;
-              note.content.preview_plain = null;
-            } else if (result.plain) {
+            }
+
+            if (result.plain) {
               note.content.preview_plain = result.plain;
-              note.content.preview_html = null;
             }
           } else {
             if (_this4.mode == 'html') {
