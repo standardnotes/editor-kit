@@ -1,6 +1,6 @@
 {
   "name": "sn-editor-kit",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "description": "Standard Notes Editor Kit",
   "main": "dist/editor-kit.js",
   "scripts": {
