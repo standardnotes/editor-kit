@@ -1,4 +1,4 @@
-import ComponentManager from 'sn-components-api';
+import ComponentRelay from '@standardnotes/component-relay';
 
 import Util from "./Util.js"
 import FileLoader from "./FileLoader.js"
@@ -52,7 +52,7 @@ export default class EditorKit {
   }
 
   configureFilesafe() {
-    this.filesafe = new this.FilesafeClass({componentManager: this.componentManager});
+    this.filesafe = new this.FilesafeClass({componentManager: this.componentRelay});
 
     this.filesafe.addDataChangeObserver(() => {
       // Reload UI by querying Filesafe for changes
@@ -113,15 +113,22 @@ export default class EditorKit {
   }
 
   connectToBridge() {
-    this.componentManager = new ComponentManager(null, () => {
-      // On ready and permissions authorization
-      document.documentElement.classList.add(this.componentManager.platform);
+    this.componentRelay = new ComponentRelay({
+      targetWindow: window,
+      options: {
+        // The editor does some debouncing for us, so we'll lower the default debounce value from 250 to 150
+        coallesedSavingDelay: this.coallesedSavingDelay
+      },
+      onReady: () => {
+        // On ready and permissions authorization
+        document.documentElement.classList.add(this.componentRelay.platform);
+      }
     });
 
     // The editor does some debouncing for us, so we'll lower the default debounce value from 250 to 150
-    this.componentManager.coallesedSavingDelay = this.coallesedSavingDelay;
+    this.componentRelay.coallesedSavingDelay = this.coallesedSavingDelay;
 
-    this.componentManager.streamContextItem((note) => {
+    this.componentRelay.streamContextItem((note) => {
       // Todo: if note has changed, release previous temp object urls
       let isNewNoteLoad = true;
       if(this.note && this.note.uuid == note.uuid) {
@@ -206,7 +213,7 @@ export default class EditorKit {
 
     let note = this.note;
     if(note) {
-      this.componentManager.saveItemWithPresave(note, () => {
+      this.componentRelay.saveItemWithPresave(note, () => {
         note.content.text = text;
         if(this.delegate.generateCustomPreview) {
           let result = this.delegate.generateCustomPreview(text);
