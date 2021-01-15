@@ -1,7 +1,6 @@
 import EditorKitInternal from "./lib/EditorKitInternal";
-import EditorKitDelegate from "./EditorKitDelegate"
 
-class EditorKit {
+export default class EditorKit {
 
   /*
     @param EditorKitDelegate `delegate`: The instance responsible for handling editor-specific events
@@ -64,5 +63,3 @@ class EditorKit {
     return this.internal.uploadJSFileObject(file);
   }
 }
-
-export {EditorKit, EditorKitDelegate}

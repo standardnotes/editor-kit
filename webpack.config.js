@@ -1,24 +1,25 @@
-var path = require('path');
-var webpack = require('webpack');
-const uglifyJsPlugin = webpack.optimize.UglifyJsPlugin;
+const path = require('path');
 const CopyWebpackPlugin = require('copy-webpack-plugin');
 
 module.exports = {
+    mode: "production",
     entry: {
-      "editor-kit.js": "./src/EditorKit.js",
-      "editor-kit.min.js": "./src/EditorKit.js",
+      "editor-kit": "./src/index.js",
+      "editor-kit.min": "./src/index.js",
     },
     output: {
         path: path.resolve(__dirname, 'dist'),
-        filename: './[name]',
+        filename: './[name].js',
+        sourceMapFilename: '[name].js.map',
         library: 'EditorKit',
-        libraryTarget: 'commonjs2'
+        libraryTarget: 'umd',
+        umdNamedDefine: true
     },
     externals: {
       'filesafe-js': 'filesafe-js'
     },
     module: {
-      loaders: [
+      rules: [
         {
           test: /\.js$/,
           loader: 'babel-loader',
@@ -29,13 +30,12 @@ module.exports = {
         colors: true
     },
     plugins: [
-      new uglifyJsPlugin({
-        include: /\.min\.js$/,
-        minimize: true
-      }),
       new CopyWebpackPlugin([
-        { from: './node_modules/filesafe-js/dist/filesafe-js/EncryptionWorker.js', to: 'filesafe-js/EncryptionWorker.js' },
-      ])
+        {
+          from: './node_modules/filesafe-js/dist/filesafe-js/EncryptionWorker.js',
+          to: 'filesafe-js/EncryptionWorker.js'
+        },
+      ]),
     ],
     devtool: 'source-map'
 };
