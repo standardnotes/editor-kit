@@ -1,6 +1,6 @@
 {
   "name": "sn-editor-kit",
-  "version": "1.0.7",
+  "version": "1.0.8",
   "description": "Standard Notes Editor Kit",
   "main": "dist/editor-kit.js",
   "scripts": {
@@ -15,7 +15,7 @@
     "@babel/preset-env": "^7.12.11",
     "@babel/preset-react": "^7.12.10",
     "@babel/preset-stage-0": "^7.8.3",
-    "@standardnotes/component-relay": "2.0.1",
+    "@standardnotes/component-relay": "2.0.2",
     "babel-cli": "^6.26.0",
     "babel-loader": "^8.2.2",
     "babel-plugin-transform-runtime": "^6.23.0",
