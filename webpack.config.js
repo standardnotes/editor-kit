@@ -1,18 +1,23 @@
 const path = require('path');
 const CopyWebpackPlugin = require('copy-webpack-plugin');
+const TerserPlugin = require("terser-webpack-plugin");
 
 module.exports = {
-  mode: "production",
+  mode: 'production',
   entry: {
-    "editor-kit": "./src/index.js",
-    "editor-kit.min": "./src/index.js",
+    'editorkit': './lib/index.ts',
+    'editorkit.min': './lib/index.ts',
+  },
+  resolve: {
+    extensions: ['.ts']
   },
   output: {
     path: path.resolve(__dirname, 'dist'),
-    filename: './[name].js',
+    filename: '[name].js',
     sourceMapFilename: '[name].js.map',
     library: 'EditorKit',
     libraryTarget: 'umd',
+    libraryExport: 'default',
     umdNamedDefine: true
   },
   externals: {
@@ -21,21 +26,42 @@ module.exports = {
   module: {
     rules: [
       {
-        test: /\.js$/,
-        loader: 'babel-loader',
-      },
+        exclude: /node_modules/,
+        test: /\.(ts)?$/,
+        use: [
+          {
+            loader: "babel-loader",
+            options: {
+              cacheDirectory: true,
+              presets: [
+                ["@babel/preset-env"],
+                ["@babel/preset-typescript"]
+              ],
+              plugins: [
+                "@babel/plugin-proposal-class-properties"
+              ]
+            }
+          }
+        ]
+      }
     ]
   },
-  stats: {
-    colors: true
-  },
   plugins: [
-    new CopyWebpackPlugin([
-      {
-        from: './node_modules/filesafe-js/dist/filesafe-js/EncryptionWorker.js',
-        to: 'filesafe-js/EncryptionWorker.js'
-      },
-    ]),
+    new CopyWebpackPlugin({
+      patterns: [
+        {
+          from: './node_modules/filesafe-js/dist/filesafe-js/EncryptionWorker.js',
+          to: 'filesafe-js/EncryptionWorker.js'
+        },
+      ]
+    }),
   ],
-  devtool: 'source-map'
+  devtool: 'source-map',
+  optimization: {
+    usedExports: true,
+    minimize: true,
+    minimizer: [new TerserPlugin({
+      include: /\.min\.js$/
+    })]
+  }
 };
