@@ -948,10 +948,10 @@
     "@nodelib/fs.scandir" "2.1.4"
     fastq "^1.6.0"
 
-"@standardnotes/component-relay@2.0.4":
-  version "2.0.4"
-  resolved "https://registry.yarnpkg.com/@standardnotes/component-relay/-/component-relay-2.0.4.tgz#86a7e3d9ecefe69a3da8dc44c7eca6cc92c8954f"
-  integrity sha512-Jkk8TFm7taIvbgM16ctSU8Y86doFRLEHoqRvtJ2EVpJs8A1HsvETVJMDFjHvrkNHQ/QNE6kc0KYFqi/sqyYmIQ==
+"@standardnotes/component-relay@2.0.5":
+  version "2.0.5"
+  resolved "https://registry.yarnpkg.com/@standardnotes/component-relay/-/component-relay-2.0.5.tgz#8ba8403e543ba146131b24339c539bff4e950c2a"
+  integrity sha512-N3Ely1kI3/U3P/eFQs7UvX6cKXOX0uNxNhjsOu9JRmJvJqsB08EWBO7x07q2QPkQydy9ZBkMSYhwHAZCozTRjQ==
 
 "@types/eslint-scope@^3.7.0":
   version "3.7.0"
