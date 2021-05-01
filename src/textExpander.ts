@@ -19,7 +19,7 @@ type OnKeyUpParams = {
 }
 
 type SearchPatternsParams = {
-  searchPreviousLine?: boolean
+  searchPreviousLine: boolean
 }
 
 export default class TextExpander {
@@ -28,13 +28,13 @@ export default class TextExpander {
   public onKeyUp ({ isEnter, isPaste, isSpace }: OnKeyUpParams): void {
     if (isEnter || isPaste || isSpace) {
       this.searchPatterns({
-        searchPreviousLine: isEnter
+        searchPreviousLine: isEnter ?? false
       })
     }
   }
 
-  public searchPatterns (params?: SearchPatternsParams): void {
-    const text = (params?.searchPreviousLine) ?
+  public searchPatterns (params: SearchPatternsParams = { searchPreviousLine: false }): void {
+    const text = (params.searchPreviousLine) ?
       this.options.getPreviousLineText() : this.options.getCurrentLineText()
 
     for (const pattern of this.options.patterns) {
@@ -45,14 +45,20 @@ export default class TextExpander {
 
       if (matchedText) {
         const replaceWith = pattern.callback(matchedText)
-        this.replaceSelection(pattern.regex, replaceWith, params?.searchPreviousLine)
+        this.replaceSelection(pattern.regex, replaceWith, params.searchPreviousLine)
       }
     }
   }
 
   public replaceSelection (regex: RegExp, replacement: string, searchPreviousLine: boolean): void {
-    this.options?.beforeExpand()
+    if (this.options?.beforeExpand) {
+      this.options.beforeExpand()
+    }
+
     this.options.replaceText(regex, replacement, searchPreviousLine)
-    this.options?.afterExpand()
+
+    if (this.options?.afterExpand) {
+      this.options?.afterExpand()
+    }
   }
 }

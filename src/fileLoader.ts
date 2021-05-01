@@ -7,19 +7,84 @@ type FileLoaderOptions = {
   insertElement: (element: Element, inVicinityOfElement: Element, insertionType: string) => void
 }
 
+type FileTypes = {
+  [key: string]: string
+}
+
+type UuidTypeMapping = {
+  [key: string]: {
+    url: string
+    fileType: string
+    fsName: string
+  }
+}
+
+type ElementStatusMapping = {
+  [key: string]: Element
+}
+
+type InsertMediaElementParams = {
+  url: string,
+  fsid: string,
+  fsName: string,
+  fileType: string,
+  fsElement: Element
+}
+
+type WrapElementInTagParams = {
+  element: Element,
+  tagName: string,
+  fsid: string,
+  fsName: string
+}
+
+type SetStatusParams = {
+  status?: string,
+  fsElement: Element,
+  fsid: string,
+  removable?: boolean
+}
+
+type CreateImageElementParams = {
+  url: string,
+  fsid: string,
+  fsName: string,
+  fsElement: Element
+}
+
+type CreateAudioElementParams = {
+  url: string,
+  fsid: string,
+  fsName: string
+}
+
+type CreateVideoElementParams = {
+  url: string,
+  fsid: string,
+  fileType: string,
+  fsName: string,
+  fsElement: Element
+}
+
+type CreateDownloadElementParams = {
+  url: string,
+  fsid: string,
+  fsName: string
+}
+
 export default class FileLoader {
   /**
    * When a file is decrypted and loaded into a temp url, we'll place the temp url in here so that subsequent decrypt attempts
    * dont require further work. Mapped values have the shape of { url, fileType, fsName }
    */
-  private uuidToFileTempUrlAndTypeMapping = {}
+  private uuidToFileTempUrlAndTypeMapping: UuidTypeMapping = {}
 
   // The UUIDs of files currently loading, so that we don't start a new load for currently loading file.
-  private currentlyLoadingIds = []
+  private currentlyLoadingIds: string[] = []
 
   // The UUID to current status element mapping
-  private statusElementMapping = {}
-  private readonly fileTypeToElementType = {
+  private statusElementMapping: ElementStatusMapping = {}
+  private readonly fileTypeToElementType: FileTypes = {
     'image/png': 'img',
     'image/jpg': 'img',
     'image/jpeg': 'img',
@@ -51,8 +116,12 @@ export default class FileLoader {
     const { fileSafeInstance } = this.options
 
     const fsid = fsElement.getAttribute('fsid')
-    const fsName = fsElement.getAttribute('fsName')
+    const fsName = fsElement.getAttribute('fsName') ?? ''
     const fileNameDisplay = (!fsName || fsName == 'undefined') ? 'file' : fsName
+
+    if (!fsid) {
+      return
+    }
 
     const existingMapping = this.uuidToFileTempUrlAndTypeMapping[fsid]
 
@@ -106,7 +175,7 @@ export default class FileLoader {
      // Allow UI to update before beginning download...
     await sleep(0.05)
 
-    const fileItem = await fileSafeInstance.downloadFileFromDescriptor(descriptor).catch((_downloadError) => {
+    const fileItem = await fileSafeInstance.downloadFileFromDescriptor(descriptor).catch(() => {
       this.setStatus({
         fsElement,
         fsid,
@@ -128,7 +197,7 @@ export default class FileLoader {
     // Allow UI to update before beginning decryption
     await sleep(0.05)
 
-    const data = await fileSafeInstance.decryptFile({ fileDescriptor: descriptor, fileItem }).catch((_decryptError) => {
+    const data = await fileSafeInstance.decryptFile({ fileDescriptor: descriptor, fileItem }).catch(() => {
       this.setStatus({
         fsElement,
         fsid,
@@ -144,8 +213,7 @@ export default class FileLoader {
     // Remove loading text
     this.setStatus({
       fsElement,
-      fsid,
-      status: null
+      fsid
     })
 
     // Allow UI to update before adding image
@@ -170,13 +238,13 @@ export default class FileLoader {
     this.uuidToFileTempUrlAndTypeMapping[fsid] = {
       fileType,
       url: tempUrl,
-      fsName: fsName,
+      fsName,
     }
 
     return true
   }
 
-  private insertMediaElement({ url, fsid, fsName, fileType, fsElement }: { url: string, fsid: string, fsName: string, fileType: string, fsElement: Element }) {
+  private insertMediaElement({ url, fsid, fsName, fileType, fsElement }: InsertMediaElementParams) {
     const elementType = this.fileTypeForElementType(fileType)
 
     let mediaElement: Element
@@ -202,7 +270,7 @@ export default class FileLoader {
     fsElement.remove()
   }
 
-  private wrapElementInTag({ element, tagName, fsid, fsName }: { element: Element, tagName: string, fsid: string, fsName: string }) {
+  private wrapElementInTag({ element, tagName, fsid, fsName }: WrapElementInTagParams) {
     const tag = document.createElement(tagName)
     tag.setAttribute('fsid', fsid)
     tag.setAttribute('fsName', fsName)
@@ -212,7 +280,7 @@ export default class FileLoader {
     return tag
   }
 
-  private createImageElement({ url, fsid, fsName, fsElement }: { url: string, fsid: string, fsName: string, fsElement: Element }): HTMLImageElement {
+  private createImageElement({ url, fsid, fsName, fsElement }: CreateImageElementParams): HTMLImageElement {
     const image = document.createElement('img')
     image.setAttribute('src', url)
     image.setAttribute('srcset', `${url} 2x`)
@@ -221,30 +289,34 @@ export default class FileLoader {
     image.setAttribute('fsName', fsName)
     image.setAttribute('fscollapsable', 'true')
 
-    if (fsElement.getAttribute('width')) {
-      image.setAttribute('width', fsElement.getAttribute('width'))
+    const elementWidth = fsElement.getAttribute('width')
+    if (elementWidth) {
+      image.setAttribute('width', elementWidth)
     }
 
-    if (fsElement.getAttribute('height')) {
-      image.setAttribute('height', fsElement.getAttribute('height'))
+    const elementHeight = fsElement.getAttribute('height')
+    if (elementHeight) {
+      image.setAttribute('height', elementHeight)
     }
 
     return image
   }
 
-  private createVideoElement({ url, fsid, fileType, fsName, fsElement }: { url: string, fsid: string, fileType: string, fsName: string, fsElement: Element }) {
+  private createVideoElement({ url, fsid, fileType, fsName, fsElement }: CreateVideoElementParams) {
     const video = document.createElement('video')
     video.setAttribute('controls', 'true')
     video.setAttribute('fsid', fsid)
     video.setAttribute('fsName', fsName)
     video.setAttribute('fscollapsable', 'true')
 
-    if (fsElement.getAttribute('width')) {
-      video.setAttribute('width', fsElement.getAttribute('width'))
+    const elementWidth = fsElement.getAttribute('width')
+    if (elementWidth) {
+      video.setAttribute('width', elementWidth)
     }
 
-    if (fsElement.getAttribute('height')) {
-      video.setAttribute('height', fsElement.getAttribute('height'))
+    const elementHeight = fsElement.getAttribute('height')
+    if (elementHeight) {
+      video.setAttribute('height', elementHeight)
     }
 
     const source = document.createElement('source')
@@ -264,7 +336,7 @@ export default class FileLoader {
     })
   }
 
-  private createDownloadElement({ url, fsid, fsName }: { url: string, fsid: string, fsName: string }) {
+  private createDownloadElement({ url, fsid, fsName }: CreateDownloadElementParams) {
     const link = document.createElement('a')
     link.setAttribute('fsid', fsid)
     link.setAttribute('fsName', fsName)
@@ -275,7 +347,7 @@ export default class FileLoader {
     return link
   }
 
-  private createAudioElement({ url, fsid, fsName }: { url: string, fsid: string, fsName: string }) {
+  private createAudioElement({ url, fsid, fsName }: CreateAudioElementParams) {
     const audio = document.createElement('audio')
     audio.setAttribute('src', url)
     audio.setAttribute('controls', 'true')
@@ -291,7 +363,7 @@ export default class FileLoader {
     })
   }
 
-  private setStatus({ status, fsElement, fsid, removable = false }: { status?: string, fsElement: Element, fsid?: string, removable?: boolean }): Element | void {
+  private setStatus({ status, fsElement, fsid, removable = false }: SetStatusParams): Element | void {
     if (fsid) {
       const existingStatusElement = this.statusElementMapping[fsid]
 
