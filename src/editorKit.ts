@@ -149,6 +149,9 @@ export default class EditorKitBase {
   }
 
   private async importFileSafe() {
+    if (!this.options.supportsFileSafe) {
+      return
+    }
     return import('filesafe-js').then((result) => {
       this.fileSafeClass = result.default
       this.configureFileSafe()
