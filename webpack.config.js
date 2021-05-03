@@ -3,10 +3,9 @@ const CopyWebpackPlugin = require('copy-webpack-plugin');
 const TerserPlugin = require("terser-webpack-plugin");
 
 module.exports = {
-  mode: 'production',
   entry: {
-    'editorkit': './lib/index.ts',
-    'editorkit.min': './lib/index.ts',
+    'editorkit': './src/index.ts',
+    'editorkit.min': './src/index.ts',
   },
   resolve: {
     extensions: ['.ts']
@@ -56,7 +55,6 @@ module.exports = {
       ]
     }),
   ],
-  devtool: 'source-map',
   optimization: {
     usedExports: true,
     minimize: true,
