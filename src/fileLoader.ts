@@ -40,7 +40,7 @@ type WrapElementInTagParams = {
 
 type SetStatusParams = {
   status?: string,
-  fsElement: Element,
+  fsElement?: Element,
   fsid: string,
   removable?: boolean
 }
@@ -400,7 +400,6 @@ export default class FileLoader {
     const identifier = Math.random().toString(36).substring(7)
     this.setStatus({
       status,
-      fsElement: null,
       fsid: identifier
     })
     return identifier
@@ -418,7 +417,11 @@ export default class FileLoader {
     }
   }
 
-  public insertElementNearElement(domNodeToInsert: Element, inVicinityOfElement: Element): Element {
+  public insertElementNearElement(domNodeToInsert: Element, inVicinityOfElement?: Element): Element | undefined {
+    if (!inVicinityOfElement) {
+      return
+    }
+
     const processedElement = this.options.preprocessElement(domNodeToInsert)
     let insertionType = 'child'
 
