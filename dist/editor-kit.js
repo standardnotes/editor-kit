@@ -1055,4 +1055,4 @@ __webpack_exports__ = __webpack_exports__.default;
 /******/ })()
 ;
 });
-//# sourceMappingURL=editorkit.js.map
+//# sourceMappingURL=editor-kit.js.map
