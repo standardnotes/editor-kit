@@ -14,6 +14,13 @@ import {
   FileSafeFileMetadata
 } from './fileSafeHtml'
 
+/**
+ * The delegate is responsible for responding to events and functions that the EditorKit requires.
+ * For example, when EditorKit wants to insert a new HTML element, it won't neccessarily know how,
+ * because it's not designed for any particular editor. Instead, it will tell the delegate to
+ * insert the element. The consumer of this API, the actual editor, would configure this delegate
+ * with the appropriate callbacks.
+ */
 interface EditorKitDelegate {
   insertRawText: (text: string) => void
   setEditorRawText: (text: string) => void
@@ -30,13 +37,23 @@ interface EditorKitDelegate {
 enum EditorKitMode {
   PlainText = 'plaintext',
   Html = 'html',
-  Markdown = 'markdown'
+  Markdown = 'markdown',
+  Json = 'json'
 }
 
 type EditorKitOptions = {
   mode: EditorKitMode
+  /**
+   * Indicates if the editor should support FileSafe integration.
+   */
   supportsFileSafe: false
+  /**
+   * For Component Relay saving. Indicates if debouncer is enabled.
+   */
   coallesedSaving: false
+  /**
+   * For Component Relay saving. Indicates what the debouncer ms delay should be set to.
+   */
   coallesedSavingDelay: 250
 }
 
@@ -231,6 +248,10 @@ export default class EditorKitBase {
     })
   }
 
+  /**
+   * Gets the FileSafe class.
+   * @returns FileSafe class.
+   */
   public async getFileSafe(): Promise<void> {
     if (!this.fileSafeInstance && this.fileSafeLoading) {
       return this.fileSafeLoading
@@ -238,6 +259,9 @@ export default class EditorKitBase {
     return this.importFileSafe()
   }
 
+  /**
+   * Called by consumer when the editor has a keyup event.
+   */
   public onEditorKeyUp({ isSpace, isEnter }: OnEditorKeyUpParams): void {
     this.textExpander!.onKeyUp({
        isSpace,
@@ -245,12 +269,18 @@ export default class EditorKitBase {
     })
   }
 
+  /**
+   * Called by consumer when user pastes into editor.
+   */
   public onEditorPaste(): void {
     this.textExpander!.onKeyUp({
       isPaste: true
     })
   }
 
+  /**
+   * Called by consumer when the editor has a change/input event.
+   */
   public onEditorValueChanged(text: string): void {
     const { mode, supportsFileSafe } = this.options
 
@@ -317,13 +347,22 @@ export default class EditorKitBase {
     })
   }
 
+  /**
+   * Whether or not FileSafe is configured with integrations and keys, and can handle file uploads.
+   * If not, user should open files modal and configure FileSafe.
+   */
   public canUploadFiles(): boolean {
     const credentials = this.fileSafeInstance.getAllCredentials()
     const integrations = this.fileSafeInstance.getAllIntegrations()
     return credentials.length > 0 && integrations.length > 0
   }
 
-  async uploadJSFileObject(file: string): Promise<void> {
+  /**
+   * Encrypts and Uploads a Javascript file object to FileSafe.
+   * @param file The file to upload.
+   * @returns A file descriptor if successful.
+   */
+  async uploadJSFileObject(file: Blob): Promise<void> {
     const cursorIdentifier = this.fileLoader!.insertStatusAtCursor('Processing file...')
     return this.fileSafeInstance.encryptAndUploadJavaScriptFileObject(file).then(() => {
       this.fileLoader!.removeCursorStatus(cursorIdentifier)
