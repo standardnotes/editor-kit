@@ -1,5 +1,5 @@
 {
-  "include": ["src/index.ts"],
+  "include": ["src/editorKit.ts"],
   "exclude": ["node_modules", "webpack.*.js"],
   "compilerOptions": {
     "target": "esnext",
@@ -19,7 +19,7 @@
     "forceConsistentCasingInFileNames": true
   },
   "typedocOptions": {
-    "entryPoints": ["./src/index.ts"],
+    "entryPoints": ["./src/editorKit.ts"],
     "name": "Editor Kit API Reference",
     "includeVersion": true,
     "out": "docs"
