@@ -4,8 +4,8 @@ const TerserPlugin = require("terser-webpack-plugin");
 
 module.exports = {
   entry: {
-    'editorkit': './src/editorKit.ts',
-    'editorkit.min': './src/editorKit.ts',
+    'editor-kit': './src/editorKit.ts',
+    'editor-kit.min': './src/editorKit.ts',
   },
   resolve: {
     extensions: ['.ts']
