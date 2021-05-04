@@ -1,6 +1,6 @@
 import ComponentRelay from '@standardnotes/component-relay'
-import FileLoader from './fileLoader'
-import TextExpander from './textExpander'
+import FileLoader, { FileLoaderOptions } from './fileLoader'
+import TextExpander, { TextExpanderOptions } from './textExpander'
 import {
   truncateString,
   htmlToText
@@ -14,19 +14,17 @@ import {
   FileSafeFileMetadata
 } from './fileSafeHtml'
 
-type GenericCallback = (...params: any[]) => any
-
 interface EditorKitDelegate {
-  insertRawText: GenericCallback
-  setEditorRawText: GenericCallback
-  getCurrentLineText: GenericCallback
-  getPreviousLineText: GenericCallback
-  replaceText: GenericCallback
-  getElementsBySelector: GenericCallback
-  insertElement: GenericCallback
-  preprocessElement: GenericCallback
-  clearUndoHistory: GenericCallback
-  generateCustomPreview: GenericCallback
+  insertRawText: (text: string) => void
+  setEditorRawText: (text: string) => void
+  getCurrentLineText: TextExpanderOptions['getCurrentLineText']
+  getPreviousLineText: TextExpanderOptions['getPreviousLineText']
+  replaceText: TextExpanderOptions['replaceText']
+  getElementsBySelector: FileLoaderOptions['getElementsBySelector']
+  insertElement: FileLoaderOptions['insertElement']
+  preprocessElement: FileLoaderOptions['preprocessElement']
+  clearUndoHistory: () => void
+  generateCustomPreview: (text: string) => { html: string, plain: string }
 }
 
 enum EditorKitMode {

@@ -3,7 +3,7 @@ type Pattern = {
   callback: (matchedText: string) => string
 }
 
-type TextExpanderOptions = {
+export type TextExpanderOptions = {
   patterns: Pattern[]
   beforeExpand?: () => void
   afterExpand?: () => void

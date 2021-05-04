@@ -1,8 +1,8 @@
 import { sleep } from './utils'
 
-type FileLoaderOptions = {
+export type FileLoaderOptions = {
   fileSafeInstance: any
-  getElementsBySelector: (selector: string) => any[]
+  getElementsBySelector: (selector: string) => Element[]
   preprocessElement: (element: Element) => Element
   insertElement: (element: Element, inVicinityOfElement: Element | null, insertionType: string) => void
 }
