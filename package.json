@@ -6,7 +6,7 @@
     "type": "git",
     "url": "git://github.com/standardnotes/editor-kit.git"
   },
-  "main": "dist/dist.min.js",
+  "main": "dist/editorkit.min.js",
   "types": "dist/@types/index.d.ts",
   "scripts": {
     "build:docs": "typedoc",
