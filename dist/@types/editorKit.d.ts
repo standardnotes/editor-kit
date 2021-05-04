@@ -1,5 +1,12 @@
 import { FileLoaderOptions } from './fileLoader';
 import { TextExpanderOptions } from './textExpander';
+/**
+ * The delegate is responsible for responding to events and functions that the EditorKit requires.
+ * For example, when EditorKit wants to insert a new HTML element, it won't neccessarily know how,
+ * because it's not designed for any particular editor. Instead, it will tell the delegate to
+ * insert the element. The consumer of this API, the actual editor, would configure this delegate
+ * with the appropriate callbacks.
+ */
 interface EditorKitDelegate {
     insertRawText: (text: string) => void;
     setEditorRawText: (text: string) => void;
@@ -18,12 +25,22 @@ interface EditorKitDelegate {
 declare enum EditorKitMode {
     PlainText = "plaintext",
     Html = "html",
-    Markdown = "markdown"
+    Markdown = "markdown",
+    Json = "json"
 }
 declare type EditorKitOptions = {
     mode: EditorKitMode;
+    /**
+     * Indicates if the editor should support FileSafe integration.
+     */
     supportsFileSafe: false;
+    /**
+     * For Component Relay saving. Indicates if debouncer is enabled.
+     */
     coallesedSaving: false;
+    /**
+     * For Component Relay saving. Indicates what the debouncer ms delay should be set to.
+     */
     coallesedSavingDelay: 250;
 };
 declare type OnEditorKeyUpParams = {
@@ -48,11 +65,33 @@ export default class EditorKitBase {
     private connectToBridge;
     private importFileSafe;
     private configureFileSafe;
+    /**
+     * Gets the FileSafe class.
+     * @returns FileSafe class.
+     */
     getFileSafe(): Promise<void>;
+    /**
+     * Called by consumer when the editor has a keyup event.
+     */
     onEditorKeyUp({ isSpace, isEnter }: OnEditorKeyUpParams): void;
+    /**
+     * Called by consumer when user pastes into editor.
+     */
     onEditorPaste(): void;
+    /**
+     * Called by consumer when the editor has a change/input event.
+     */
     onEditorValueChanged(text: string): void;
+    /**
+     * Whether or not FileSafe is configured with integrations and keys, and can handle file uploads.
+     * If not, user should open files modal and configure FileSafe.
+     */
     canUploadFiles(): boolean;
-    uploadJSFileObject(file: string): Promise<void>;
+    /**
+     * Encrypts and Uploads a Javascript file object to FileSafe.
+     * @param file The file to upload.
+     * @returns A file descriptor if successful.
+     */
+    uploadJSFileObject(file: Blob): Promise<void>;
 }
 export {};

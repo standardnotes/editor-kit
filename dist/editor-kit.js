@@ -737,12 +737,21 @@ function editorKit_defineProperty(obj, key, value) { if (key in obj) { Object.de
 
 
 
+/**
+ * The delegate is responsible for responding to events and functions that the EditorKit requires.
+ * For example, when EditorKit wants to insert a new HTML element, it won't neccessarily know how,
+ * because it's not designed for any particular editor. Instead, it will tell the delegate to
+ * insert the element. The consumer of this API, the actual editor, would configure this delegate
+ * with the appropriate callbacks.
+ */
+
 var EditorKitMode;
 
 (function (EditorKitMode) {
   EditorKitMode["PlainText"] = "plaintext";
   EditorKitMode["Html"] = "html";
   EditorKitMode["Markdown"] = "markdown";
+  EditorKitMode["Json"] = "json";
 })(EditorKitMode || (EditorKitMode = {}));
 
 class EditorKitBase {
@@ -938,6 +947,11 @@ class EditorKitBase {
       }]
     });
   }
+  /**
+   * Gets the FileSafe class.
+   * @returns FileSafe class.
+   */
+
 
   async getFileSafe() {
     if (!this.fileSafeInstance && this.fileSafeLoading) {
@@ -946,6 +960,10 @@ class EditorKitBase {
 
     return this.importFileSafe();
   }
+  /**
+   * Called by consumer when the editor has a keyup event.
+   */
+
 
   onEditorKeyUp(_ref) {
     let {
@@ -957,12 +975,20 @@ class EditorKitBase {
       isEnter
     });
   }
+  /**
+   * Called by consumer when user pastes into editor.
+   */
+
 
   onEditorPaste() {
     this.textExpander.onKeyUp({
       isPaste: true
     });
   }
+  /**
+   * Called by consumer when the editor has a change/input event.
+   */
+
 
   onEditorValueChanged(text) {
     const {
@@ -1033,12 +1059,23 @@ class EditorKitBase {
       }
     });
   }
+  /**
+   * Whether or not FileSafe is configured with integrations and keys, and can handle file uploads.
+   * If not, user should open files modal and configure FileSafe.
+   */
+
 
   canUploadFiles() {
     const credentials = this.fileSafeInstance.getAllCredentials();
     const integrations = this.fileSafeInstance.getAllIntegrations();
     return credentials.length > 0 && integrations.length > 0;
   }
+  /**
+   * Encrypts and Uploads a Javascript file object to FileSafe.
+   * @param file The file to upload.
+   * @returns A file descriptor if successful.
+   */
+
 
   async uploadJSFileObject(file) {
     const cursorIdentifier = this.fileLoader.insertStatusAtCursor('Processing file...');
