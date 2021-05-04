@@ -9,7 +9,7 @@ type TextExpanderOptions = {
   afterExpand?: () => void
   getCurrentLineText: () => string
   getPreviousLineText: () => string
-  replaceText: (regex: RegExp, replacement: string, searchPreviousLine: boolean) => string
+  replaceText: ({ regex: RegExp, replacement: string, searchPreviousLine: boolean }) => string
 }
 
 type OnKeyUpParams = {
@@ -55,7 +55,11 @@ export default class TextExpander {
       this.options.beforeExpand()
     }
 
-    this.options.replaceText(regex, replacement, searchPreviousLine)
+    this.options.replaceText({
+      regex,
+      replacement,
+      searchPreviousLine
+    })
 
     if (this.options?.afterExpand) {
       this.options?.afterExpand()

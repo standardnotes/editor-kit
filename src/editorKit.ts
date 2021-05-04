@@ -18,7 +18,6 @@ type GenericCallback = (...params: any[]) => any
 
 interface EditorKitDelegate {
   insertRawText: GenericCallback
-  onReceiveNote: GenericCallback
   setEditorRawText: GenericCallback
   getCurrentLineText: GenericCallback
   getPreviousLineText: GenericCallback
@@ -30,11 +29,22 @@ interface EditorKitDelegate {
   generateCustomPreview: GenericCallback
 }
 
+enum EditorKitMode {
+  PlainText = 'plaintext',
+  Html = 'html',
+  Markdown = 'markdown'
+}
+
 type EditorKitOptions = {
-  mode: 'plaintext' | 'html' | 'markdown'
+  mode: EditorKitMode
   supportsFileSafe: false
   coallesedSaving: false
   coallesedSavingDelay: 250
+}
+
+type OnEditorKeyUpParams = {
+  isSpace: boolean
+  isEnter: boolean
 }
 
 type FileUuid = string
@@ -107,7 +117,9 @@ export default class EditorKitBase {
       }
 
        // Only update UI on non-metadata updates.
-      if (note.isMetadataUpdate) return
+      if (note.isMetadataUpdate) {
+        return
+      }
 
       let text = note.content.text
 
@@ -117,7 +129,7 @@ export default class EditorKitBase {
        * If it's not, we don't want to convert it to HTML until the user makes an explicit change
        * so we'll ignore the next change event in this case.
        */
-      if (mode === 'html' && isNewNoteLoad) {
+      if (mode === EditorKitMode.Html && isNewNoteLoad) {
         const isHtml = /<[a-z][\s\S]*>/i.test(text)
         if (!isHtml) {
           this.ignoreNextTextChange = true
@@ -149,9 +161,6 @@ export default class EditorKitBase {
   }
 
   private async importFileSafe() {
-    if (!this.options.supportsFileSafe) {
-      return
-    }
     return import('filesafe-js').then((result) => {
       this.fileSafeClass = result.default
       this.configureFileSafe()
@@ -211,9 +220,7 @@ export default class EditorKitBase {
     })
 
     this.textExpander = new TextExpander({
-      afterExpand: () => {
-        this.fileLoader!.loadFileSafeElements()
-      },
+      afterExpand: () => this.fileLoader!.loadFileSafeElements(),
       getCurrentLineText: this.delegate.getCurrentLineText,
       getPreviousLineText: this.delegate.getPreviousLineText,
       replaceText: this.delegate.replaceText,
@@ -233,7 +240,7 @@ export default class EditorKitBase {
     return this.importFileSafe()
   }
 
-  public onEditorKeyUp({ isSpace, isEnter }: { isSpace: boolean, isEnter: boolean }): void {
+  public onEditorKeyUp({ isSpace, isEnter }: OnEditorKeyUpParams): void {
     this.textExpander!.onKeyUp({
        isSpace,
        isEnter
@@ -268,16 +275,20 @@ export default class EditorKitBase {
        * after being collapsed, will not change. So we'll compare the previous html to new collapsed html before continuing.
        */
       const sameText = this.previousText == text
-      if (sameText) return
+      if (sameText) {
+        return
+      }
     }
 
     this.previousText = text
 
+    if (!this.note) {
+      return
+    }
+
     const note = this.note
 
-    if (!note) return
-
-    this.componentRelay!.saveItemWithPresave(note, null, () => {
+    this.componentRelay!.saveItemWithPresave(note, () => {
       note.content.text = text
 
       if (this.delegate.generateCustomPreview) {
@@ -289,7 +300,7 @@ export default class EditorKitBase {
           note.content.preview_plain = result.plain
         }
       } else {
-        if (mode == 'html') {
+        if (mode === EditorKitMode.Html) {
           let preview = removeFileSafeSyntaxFromHtml(text)
           preview = truncateString(htmlToText(preview))
           /**
