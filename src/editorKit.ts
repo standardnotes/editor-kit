@@ -315,9 +315,9 @@ export default class EditorKitBase {
   }
 
   async uploadJSFileObject(file: string): Promise<void> {
-    const status = this.fileLoader!.insertStatusAtCursor('Processing file...')
+    const cursorIdentifier = this.fileLoader!.insertStatusAtCursor('Processing file...')
     return this.fileSafeInstance.encryptAndUploadJavaScriptFileObject(file).then(() => {
-      this.fileLoader!.removeCursorStatus(status)
+      this.fileLoader!.removeCursorStatus(cursorIdentifier)
     })
   }
 }

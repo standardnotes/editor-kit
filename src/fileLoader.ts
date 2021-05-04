@@ -4,7 +4,7 @@ type FileLoaderOptions = {
   fileSafeInstance: any
   getElementsBySelector: (selector: string) => any[]
   preprocessElement: (element: Element) => Element
-  insertElement: (element: Element, inVicinityOfElement: Element, insertionType: string) => void
+  insertElement: (element: Element, inVicinityOfElement: Element | null, insertionType: string) => void
 }
 
 type FileTypes = {
@@ -40,7 +40,7 @@ type WrapElementInTagParams = {
 
 type SetStatusParams = {
   status?: string,
-  fsElement?: Element,
+  fsElement: Element | null,
   fsid: string,
   removable?: boolean
 }
@@ -400,7 +400,8 @@ export default class FileLoader {
     const identifier = Math.random().toString(36).substring(7)
     this.setStatus({
       status,
-      fsid: identifier
+      fsid: identifier,
+      fsElement: null
     })
     return identifier
   }
@@ -417,16 +418,12 @@ export default class FileLoader {
     }
   }
 
-  public insertElementNearElement(domNodeToInsert: Element, inVicinityOfElement?: Element): Element | undefined {
-    if (!inVicinityOfElement) {
-      return
-    }
-
+  public insertElementNearElement(domNodeToInsert: Element, inVicinityOfElement: Element | null): Element | undefined {
     const processedElement = this.options.preprocessElement(domNodeToInsert)
     let insertionType = 'child'
 
     // <figure> tags cannot be nested inside p tags.
-    if (processedElement.tagName.toLowerCase() == 'figure') {
+    if (inVicinityOfElement && processedElement.tagName.toLowerCase() == 'figure') {
       // If we have a p ancestor, we need to get out.
       const paragraphAncestor = inVicinityOfElement.closest('p')
 
