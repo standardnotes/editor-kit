@@ -1,22 +1,34 @@
-declare type GenericCallback = (...params: any[]) => any;
+import { FileLoaderOptions } from './fileLoader';
+import { TextExpanderOptions } from './textExpander';
 interface EditorKitDelegate {
-    insertRawText: GenericCallback;
-    onReceiveNote: GenericCallback;
-    setEditorRawText: GenericCallback;
-    getCurrentLineText: GenericCallback;
-    getPreviousLineText: GenericCallback;
-    replaceText: GenericCallback;
-    getElementsBySelector: GenericCallback;
-    insertElement: GenericCallback;
-    preprocessElement: GenericCallback;
-    clearUndoHistory: GenericCallback;
-    generateCustomPreview: GenericCallback;
+    insertRawText: (text: string) => void;
+    setEditorRawText: (text: string) => void;
+    getCurrentLineText: TextExpanderOptions['getCurrentLineText'];
+    getPreviousLineText: TextExpanderOptions['getPreviousLineText'];
+    replaceText: TextExpanderOptions['replaceText'];
+    getElementsBySelector: FileLoaderOptions['getElementsBySelector'];
+    insertElement: FileLoaderOptions['insertElement'];
+    preprocessElement: FileLoaderOptions['preprocessElement'];
+    clearUndoHistory: () => void;
+    generateCustomPreview: (text: string) => {
+        html: string;
+        plain: string;
+    };
+}
+declare enum EditorKitMode {
+    PlainText = "plaintext",
+    Html = "html",
+    Markdown = "markdown"
 }
 declare type EditorKitOptions = {
-    mode: 'plaintext' | 'html' | 'markdown';
+    mode: EditorKitMode;
     supportsFileSafe: false;
     coallesedSaving: false;
     coallesedSavingDelay: 250;
+};
+declare type OnEditorKeyUpParams = {
+    isSpace: boolean;
+    isEnter: boolean;
 };
 export default class EditorKitBase {
     private delegate;
@@ -37,10 +49,7 @@ export default class EditorKitBase {
     private importFileSafe;
     private configureFileSafe;
     getFileSafe(): Promise<void>;
-    onEditorKeyUp({ isSpace, isEnter }: {
-        isSpace: boolean;
-        isEnter: boolean;
-    }): void;
+    onEditorKeyUp({ isSpace, isEnter }: OnEditorKeyUpParams): void;
     onEditorPaste(): void;
     onEditorValueChanged(text: string): void;
     canUploadFiles(): boolean;

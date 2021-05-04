@@ -1,6 +1,6 @@
-declare type FileLoaderOptions = {
+export declare type FileLoaderOptions = {
     fileSafeInstance: any;
-    getElementsBySelector: (selector: string) => any[];
+    getElementsBySelector: (selector: string) => Element[];
     preprocessElement: (element: Element) => Element;
     insertElement: (element: Element, inVicinityOfElement: Element | null, insertionType: string) => void;
 };
@@ -32,4 +32,3 @@ export default class FileLoader {
     removeCursorStatus(identifier: string): void;
     insertElementNearElement(domNodeToInsert: Element, inVicinityOfElement: Element | null): Element | undefined;
 }
-export {};

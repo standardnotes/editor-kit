@@ -2,13 +2,17 @@ declare type Pattern = {
     regex: RegExp;
     callback: (matchedText: string) => string;
 };
-declare type TextExpanderOptions = {
+export declare type TextExpanderOptions = {
     patterns: Pattern[];
     beforeExpand?: () => void;
     afterExpand?: () => void;
     getCurrentLineText: () => string;
     getPreviousLineText: () => string;
-    replaceText: (regex: RegExp, replacement: string, searchPreviousLine: boolean) => string;
+    replaceText: ({ regex: RegExp, replacement: string, searchPreviousLine: boolean }: {
+        regex: any;
+        replacement: any;
+        searchPreviousLine: any;
+    }) => string;
 };
 declare type OnKeyUpParams = {
     isEnter?: boolean;

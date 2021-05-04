@@ -636,7 +636,11 @@ class TextExpander {
       this.options.beforeExpand();
     }
 
-    this.options.replaceText(regex, replacement, searchPreviousLine);
+    this.options.replaceText({
+      regex,
+      replacement,
+      searchPreviousLine
+    });
 
     if ((_this$options2 = this.options) !== null && _this$options2 !== void 0 && _this$options2.afterExpand) {
       var _this$options3;
@@ -733,6 +737,14 @@ function editorKit_defineProperty(obj, key, value) { if (key in obj) { Object.de
 
 
 
+var EditorKitMode;
+
+(function (EditorKitMode) {
+  EditorKitMode["PlainText"] = "plaintext";
+  EditorKitMode["Html"] = "html";
+  EditorKitMode["Markdown"] = "markdown";
+})(EditorKitMode || (EditorKitMode = {}));
+
 class EditorKitBase {
   constructor(delegate, options) {
     this.delegate = delegate;
@@ -814,7 +826,10 @@ class EditorKitBase {
       } // Only update UI on non-metadata updates.
 
 
-      if (note.isMetadataUpdate) return;
+      if (note.isMetadataUpdate) {
+        return;
+      }
+
       let text = note.content.text;
       /**
        * If we're an HTML editor, and we're dealing with a new note,
@@ -823,7 +838,7 @@ class EditorKitBase {
        * so we'll ignore the next change event in this case.
        */
 
-      if (mode === 'html' && isNewNoteLoad) {
+      if (mode === EditorKitMode.Html && isNewNoteLoad) {
         const isHtml = /<[a-z][\s\S]*>/i.test(text);
 
         if (!isHtml) {
@@ -857,10 +872,6 @@ class EditorKitBase {
   }
 
   async importFileSafe() {
-    if (!this.options.supportsFileSafe) {
-      return;
-    }
-
     return Promise.resolve(/* import() */).then(__webpack_require__.t.bind(__webpack_require__, 695, 23)).then(result => {
       this.fileSafeClass = result.default;
       this.configureFileSafe();
@@ -915,9 +926,7 @@ class EditorKitBase {
       preprocessElement: this.delegate.preprocessElement
     });
     this.textExpander = new TextExpander({
-      afterExpand: () => {
-        this.fileLoader.loadFileSafeElements();
-      },
+      afterExpand: () => this.fileLoader.loadFileSafeElements(),
       getCurrentLineText: this.delegate.getCurrentLineText,
       getPreviousLineText: this.delegate.getPreviousLineText,
       replaceText: this.delegate.replaceText,
@@ -980,13 +989,20 @@ class EditorKitBase {
        */
 
       const sameText = this.previousText == text;
-      if (sameText) return;
+
+      if (sameText) {
+        return;
+      }
     }
 
     this.previousText = text;
+
+    if (!this.note) {
+      return;
+    }
+
     const note = this.note;
-    if (!note) return;
-    this.componentRelay.saveItemWithPresave(note, null, () => {
+    this.componentRelay.saveItemWithPresave(note, () => {
       note.content.text = text;
 
       if (this.delegate.generateCustomPreview) {
@@ -998,7 +1014,7 @@ class EditorKitBase {
           note.content.preview_plain = result.plain;
         }
       } else {
-        if (mode == 'html') {
+        if (mode === EditorKitMode.Html) {
           let preview = removeFileSafeSyntaxFromHtml(text);
           preview = truncateString(htmlToText(preview));
           /**
