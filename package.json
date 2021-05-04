@@ -6,8 +6,8 @@
     "type": "git",
     "url": "git://github.com/standardnotes/editor-kit.git"
   },
-  "main": "dist/dist.js",
-  "types": "dist/@types/editorKit.d.ts",
+  "main": "dist/dist.min.js",
+  "types": "dist/@types/index.d.ts",
   "scripts": {
     "build:docs": "typedoc",
     "build:types": "tsc",
