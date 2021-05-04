@@ -33,7 +33,7 @@ interface EditorKitDelegate {
 type EditorKitOptions = {
   mode: 'plaintext' | 'html' | 'markdown'
   supportsFileSafe: false
-  coallesedSaving: true
+  coallesedSaving: false
   coallesedSavingDelay: 250
 }
 
