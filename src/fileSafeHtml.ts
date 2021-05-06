@@ -83,6 +83,7 @@ export const collapseFileSafeSyntax = (html: string): string => {
     file.remove()
   }
 
+  // Remove any remaining ghost elements.
   const ghosts = domCopy.querySelectorAll('*[ghost]')
   ghosts.forEach((ghost) => ghost.remove())
 
