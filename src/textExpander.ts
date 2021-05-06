@@ -50,7 +50,7 @@ export default class TextExpander {
     }
   }
 
-  public replaceSelection (regex: RegExp, replacement: string, searchPreviousLine: boolean): void {
+  private replaceSelection (regex: RegExp, replacement: string, searchPreviousLine: boolean): void {
     if (this.options?.beforeExpand) {
       this.options.beforeExpand()
     }
