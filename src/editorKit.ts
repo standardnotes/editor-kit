@@ -362,7 +362,7 @@ export default class EditorKitBase {
    * @param file The file to upload.
    * @returns A file descriptor if successful.
    */
-  async uploadJSFileObject(file: Blob): Promise<void> {
+  public async uploadJSFileObject(file: Blob): Promise<void> {
     const cursorIdentifier = this.fileLoader!.insertStatusAtCursor('Processing file...')
     return this.fileSafeInstance.encryptAndUploadJavaScriptFileObject(file).then(() => {
       this.fileLoader!.removeCursorStatus(cursorIdentifier)
