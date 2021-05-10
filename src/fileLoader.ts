@@ -112,7 +112,7 @@ export default class FileLoader {
     }
   }
 
-  async loadFileSafeElement(fsElement: Element): Promise<boolean | void> {
+  public async loadFileSafeElement(fsElement: Element): Promise<boolean> {
     const { fileSafeInstance } = this.options
 
     const fsid = fsElement.getAttribute('fsid')
@@ -120,7 +120,7 @@ export default class FileLoader {
     const fileNameDisplay = (!fsName || fsName == 'undefined') ? 'file' : fsName
 
     if (!fsid) {
-      return
+      return false
     }
 
     const existingMapping = this.uuidToFileTempUrlAndTypeMapping[fsid]
@@ -133,11 +133,11 @@ export default class FileLoader {
         fileType: existingMapping.fileType,
         fsName: existingMapping.fsName
       })
-      return
+      return false
     }
 
     if (this.currentlyLoadingIds.includes(fsid)) {
-      return
+      return false
     }
 
     const descriptor = fileSafeInstance.findFileDescriptor(fsid)
@@ -161,9 +161,7 @@ export default class FileLoader {
       return false
     }
 
-    const cleanup = () => {
-      this.currentlyLoadingIds.splice(this.currentlyLoadingIds.indexOf(fsid), 1)
-    }
+    const cleanup = () => this.currentlyLoadingIds.splice(this.currentlyLoadingIds.indexOf(fsid), 1)
 
     this.currentlyLoadingIds.push(fsid)
     this.setStatus({
@@ -185,7 +183,7 @@ export default class FileLoader {
     })
 
     if (!fileItem) {
-      return
+      return false
     }
 
     this.setStatus({
@@ -206,8 +204,8 @@ export default class FileLoader {
       return
     })
 
-    if(!data) {
-      return
+    if (!data) {
+      return false
     }
 
     // Remove loading text
