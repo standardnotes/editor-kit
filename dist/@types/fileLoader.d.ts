@@ -20,7 +20,7 @@ export default class FileLoader {
      * Scans the document for elements <fileSafe>. If found, begins loading file.
      */
     loadFileSafeElements(): void;
-    loadFileSafeElement(fsElement: Element): Promise<boolean | void>;
+    loadFileSafeElement(fsElement: Element): Promise<boolean>;
     private insertMediaElement;
     private wrapElementInTag;
     private createImageElement;

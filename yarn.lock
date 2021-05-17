@@ -1261,10 +1261,10 @@
   dependencies:
     "@sinonjs/commons" "^1.7.0"
 
-"@standardnotes/component-relay@2.0.6":
-  version "2.0.6"
-  resolved "https://registry.yarnpkg.com/@standardnotes/component-relay/-/component-relay-2.0.6.tgz#169f47596e9f258504db8a5a23331e8f85cf2d9a"
-  integrity sha512-NwVHwqsN35yVxDpAU4ocrJPQgAeMLOr/ZuNNPCTYqc9satT81pz9SurZ28J4Yb6ig1Lh7q98HaMh4/INDT7NYw==
+"@standardnotes/component-relay@2.0.7":
+  version "2.0.7"
+  resolved "https://registry.yarnpkg.com/@standardnotes/component-relay/-/component-relay-2.0.7.tgz#96e62b64fbde57fc8fc02f3cbbe643ceb5ae1d0f"
+  integrity sha512-r9+TzCAxaII5TCP9vCdPKJXXMR4s8deUBXYAczeBNnS7S2QFrKEkYpqUDZrh/AxCepNaIinQunfa7G7gTCQ82Q==
 
 "@types/babel__core@^7.0.0", "@types/babel__core@^7.1.7":
   version "7.1.14"

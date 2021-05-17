@@ -21,7 +21,7 @@ import {
  * insert the element. The consumer of this API, the actual editor, would configure this delegate
  * with the appropriate callbacks.
  */
-interface EditorKitDelegate {
+export interface EditorKitDelegate {
   insertRawText: (text: string) => void
   setEditorRawText: (text: string) => void
   getCurrentLineText: TextExpanderOptions['getCurrentLineText']
@@ -32,6 +32,7 @@ interface EditorKitDelegate {
   preprocessElement: FileLoaderOptions['preprocessElement']
   clearUndoHistory: () => void
   generateCustomPreview: (text: string) => { html: string, plain: string }
+  onNoteLockToggle?: (isLocked: boolean) => void
 }
 
 enum EditorKitMode {
@@ -168,6 +169,11 @@ export default class EditorKitBase {
       }
 
       this.delegate.setEditorRawText(text)
+
+      if (this.delegate.onNoteLockToggle) {
+        const isLocked = this.componentRelay!.getItemAppDataValue(note, 'locked') ?? false
+        this.delegate.onNoteLockToggle(isLocked)
+      }
 
       if (isNewNoteLoad) {
         this.delegate.clearUndoHistory()

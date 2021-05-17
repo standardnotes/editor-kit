@@ -7,7 +7,7 @@ import { TextExpanderOptions } from './textExpander';
  * insert the element. The consumer of this API, the actual editor, would configure this delegate
  * with the appropriate callbacks.
  */
-interface EditorKitDelegate {
+export interface EditorKitDelegate {
     insertRawText: (text: string) => void;
     setEditorRawText: (text: string) => void;
     getCurrentLineText: TextExpanderOptions['getCurrentLineText'];
@@ -21,6 +21,7 @@ interface EditorKitDelegate {
         html: string;
         plain: string;
     };
+    onNoteLockToggle?: (isLocked: boolean) => void;
 }
 declare enum EditorKitMode {
     PlainText = "plaintext",
