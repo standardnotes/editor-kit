@@ -27,6 +27,6 @@ export default class TextExpander {
     constructor(options: TextExpanderOptions);
     onKeyUp({ isEnter, isPaste, isSpace }: OnKeyUpParams): void;
     searchPatterns(params?: SearchPatternsParams): void;
-    replaceSelection(regex: RegExp, replacement: string, searchPreviousLine: boolean): void;
+    private replaceSelection;
 }
 export {};
