@@ -75,7 +75,8 @@ export default class EditorKitBase {
   private fileSafeClass?: any
   private fileSafeInstance?: any
 
-  private note: any
+  private currentNote?: any
+  private previousNote?: any
   private ignoreNextTextChange?: boolean
   private needsFileSafeElementLoad?: boolean
   private previousText?: string
@@ -120,16 +121,18 @@ export default class EditorKitBase {
        * TODO: If note has changed, release previous temp object URLs.
        */
       let isNewNoteLoad = true
-      if (this.note && this.note.uuid == note.uuid) {
+      if (this.currentNote && this.currentNote.uuid == note.uuid) {
         isNewNoteLoad = false
       }
 
+      this.previousNote = this.currentNote
+
       if (supportsFileSafe) {
         const itemClass = this.fileSafeClass.getSFItemClass()
-        this.note = new itemClass(note)
-        this.fileSafeInstance.setCurrentNote(this.note)
+        this.currentNote = new itemClass(note)
+        this.fileSafeInstance.setCurrentNote(this.currentNote)
       } else {
-        this.note = note
+        this.currentNote = note
       }
 
        // Only update UI on non-metadata updates.
@@ -171,8 +174,12 @@ export default class EditorKitBase {
       this.delegate.setEditorRawText(text)
 
       if (this.delegate.onNoteLockToggle) {
-        const isLocked = this.componentRelay!.getItemAppDataValue(note, 'locked') ?? false
-        this.delegate.onNoteLockToggle(isLocked)
+        const previousLockState = this.componentRelay!.getItemAppDataValue(this.previousNote, 'locked') ?? false
+        const newLockState = this.componentRelay!.getItemAppDataValue(note, 'locked') ?? false
+
+        if (previousLockState != newLockState) {
+          this.delegate.onNoteLockToggle(newLockState)
+        }
       }
 
       if (isNewNoteLoad) {
@@ -198,7 +205,7 @@ export default class EditorKitBase {
       // Reload UI by querying FileSafe for changes...
       const allFileDescriptors = this.fileSafeInstance.getAllFileDescriptors()
 
-      if (this.note && this.fileIdsPendingAssociation.length > 0) {
+      if (this.currentNote && this.fileIdsPendingAssociation.length > 0) {
         let hasMatch = false
 
         for (const uuid of this.fileIdsPendingAssociation.slice()) {
@@ -316,11 +323,11 @@ export default class EditorKitBase {
 
     this.previousText = text
 
-    if (!this.note) {
+    if (!this.currentNote) {
       return
     }
 
-    const note = this.note
+    const note = this.currentNote
 
     this.componentRelay!.saveItemWithPresave(note, () => {
       note.content.text = text
