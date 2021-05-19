@@ -869,6 +869,17 @@ class EditorKitBase {
 
       this.delegate.setEditorRawText(text);
 
+      if (this.delegate.onNoteContentChange) {
+        var _this$previousNote, _this$currentNote;
+
+        const previousContent = (_this$previousNote = this.previousNote) === null || _this$previousNote === void 0 ? void 0 : _this$previousNote.content;
+        const newContent = (_this$currentNote = this.currentNote) === null || _this$currentNote === void 0 ? void 0 : _this$currentNote.content;
+
+        if (previousContent != newContent) {
+          this.delegate.onNoteContentChange(newContent);
+        }
+      }
+
       if (this.delegate.onNoteLockToggle) {
         var _getItemAppDataValue, _getItemAppDataValue2;
 
