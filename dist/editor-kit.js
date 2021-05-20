@@ -766,8 +766,6 @@ class EditorKitBase {
 
     editorKit_defineProperty(this, "currentNote", void 0);
 
-    editorKit_defineProperty(this, "previousNote", void 0);
-
     editorKit_defineProperty(this, "ignoreNextTextChange", void 0);
 
     editorKit_defineProperty(this, "needsFileSafeElementLoad", void 0);
@@ -819,7 +817,7 @@ class EditorKitBase {
         isNewNoteLoad = false;
       }
 
-      this.previousNote = this.currentNote;
+      const previousNote = this.currentNote;
 
       if (supportsFileSafe) {
         const itemClass = this.fileSafeClass.getSFItemClass();
@@ -870,9 +868,9 @@ class EditorKitBase {
       this.delegate.setEditorRawText(text);
 
       if (this.delegate.onNoteContentChange) {
-        var _this$previousNote, _this$currentNote;
+        var _this$currentNote;
 
-        const previousContent = (_this$previousNote = this.previousNote) === null || _this$previousNote === void 0 ? void 0 : _this$previousNote.content;
+        const previousContent = previousNote === null || previousNote === void 0 ? void 0 : previousNote.content;
         const newContent = (_this$currentNote = this.currentNote) === null || _this$currentNote === void 0 ? void 0 : _this$currentNote.content;
 
         if (previousContent != newContent) {
@@ -883,7 +881,7 @@ class EditorKitBase {
       if (this.delegate.onNoteLockToggle) {
         var _getItemAppDataValue, _getItemAppDataValue2;
 
-        const previousLockState = (_getItemAppDataValue = this.componentRelay.getItemAppDataValue(this.previousNote, 'locked')) !== null && _getItemAppDataValue !== void 0 ? _getItemAppDataValue : false;
+        const previousLockState = (_getItemAppDataValue = this.componentRelay.getItemAppDataValue(previousNote, 'locked')) !== null && _getItemAppDataValue !== void 0 ? _getItemAppDataValue : false;
         const newLockState = (_getItemAppDataValue2 = this.componentRelay.getItemAppDataValue(this.currentNote, 'locked')) !== null && _getItemAppDataValue2 !== void 0 ? _getItemAppDataValue2 : false;
 
         if (previousLockState != newLockState) {
