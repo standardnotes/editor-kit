@@ -764,7 +764,7 @@ class EditorKitBase {
 
     editorKit_defineProperty(this, "fileSafeInstance", void 0);
 
-    editorKit_defineProperty(this, "currentNote", void 0);
+    editorKit_defineProperty(this, "note", void 0);
 
     editorKit_defineProperty(this, "ignoreNextTextChange", void 0);
 
@@ -813,18 +813,18 @@ class EditorKitBase {
        */
       let isNewNoteLoad = true;
 
-      if (this.currentNote && this.currentNote.uuid == note.uuid) {
+      if (this.note && this.note.uuid == note.uuid) {
         isNewNoteLoad = false;
       }
 
-      const previousNote = this.currentNote;
+      const previousNote = this.note;
 
       if (supportsFileSafe) {
         const itemClass = this.fileSafeClass.getSFItemClass();
-        this.currentNote = new itemClass(note);
-        this.fileSafeInstance.setCurrentNote(this.currentNote);
+        this.note = new itemClass(note);
+        this.fileSafeInstance.setCurrentNote(this.note);
       } else {
-        this.currentNote = note;
+        this.note = note;
       } // Only update UI on non-metadata updates.
 
 
@@ -868,10 +868,10 @@ class EditorKitBase {
       this.delegate.setEditorRawText(text);
 
       if (this.delegate.onNoteContentChange) {
-        var _this$currentNote;
+        var _this$note;
 
         const previousContent = previousNote === null || previousNote === void 0 ? void 0 : previousNote.content;
-        const newContent = (_this$currentNote = this.currentNote) === null || _this$currentNote === void 0 ? void 0 : _this$currentNote.content;
+        const newContent = (_this$note = this.note) === null || _this$note === void 0 ? void 0 : _this$note.content;
 
         if (previousContent != newContent) {
           this.delegate.onNoteContentChange(newContent);
@@ -882,7 +882,7 @@ class EditorKitBase {
         var _getItemAppDataValue, _getItemAppDataValue2;
 
         const previousLockState = (_getItemAppDataValue = this.componentRelay.getItemAppDataValue(previousNote, 'locked')) !== null && _getItemAppDataValue !== void 0 ? _getItemAppDataValue : false;
-        const newLockState = (_getItemAppDataValue2 = this.componentRelay.getItemAppDataValue(this.currentNote, 'locked')) !== null && _getItemAppDataValue2 !== void 0 ? _getItemAppDataValue2 : false;
+        const newLockState = (_getItemAppDataValue2 = this.componentRelay.getItemAppDataValue(this.note, 'locked')) !== null && _getItemAppDataValue2 !== void 0 ? _getItemAppDataValue2 : false;
 
         if (previousLockState != newLockState) {
           this.delegate.onNoteLockToggle(newLockState);
@@ -911,7 +911,7 @@ class EditorKitBase {
       // Reload UI by querying FileSafe for changes...
       const allFileDescriptors = this.fileSafeInstance.getAllFileDescriptors();
 
-      if (this.currentNote && this.fileIdsPendingAssociation.length > 0) {
+      if (this.note && this.fileIdsPendingAssociation.length > 0) {
         let hasMatch = false;
 
         for (const uuid of this.fileIdsPendingAssociation.slice()) {
@@ -1038,11 +1038,11 @@ class EditorKitBase {
 
     this.previousText = text;
 
-    if (!this.currentNote) {
+    if (!this.note) {
       return;
     }
 
-    const note = this.currentNote;
+    const note = this.note;
     this.componentRelay.saveItemWithPresave(note, () => {
       note.content.text = text;
 
