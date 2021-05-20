@@ -22,7 +22,6 @@ export interface EditorKitDelegate {
         plain: string;
     };
     onNoteLockToggle?: (isLocked: boolean) => void;
-    onNoteContentChange?: (newContent: any) => void;
 }
 declare enum EditorKitMode {
     PlainText = "plaintext",
