@@ -78,7 +78,6 @@ export default class EditorKitBase {
   private fileSafeInstance?: any
 
   private currentNote?: ItemMessagePayload
-  private previousNote?: ItemMessagePayload
   private ignoreNextTextChange?: boolean
   private needsFileSafeElementLoad?: boolean
   private previousText?: string
@@ -127,7 +126,7 @@ export default class EditorKitBase {
         isNewNoteLoad = false
       }
 
-      this.previousNote = this.currentNote
+      const previousNote = this.currentNote
 
       if (supportsFileSafe) {
         const itemClass = this.fileSafeClass.getSFItemClass()
@@ -176,7 +175,7 @@ export default class EditorKitBase {
       this.delegate.setEditorRawText(text)
 
       if (this.delegate.onNoteContentChange) {
-        const previousContent = this.previousNote?.content
+        const previousContent = previousNote?.content
         const newContent = this.currentNote?.content
 
         if (previousContent != newContent) {
@@ -185,7 +184,7 @@ export default class EditorKitBase {
       }
 
       if (this.delegate.onNoteLockToggle) {
-        const previousLockState = this.componentRelay!.getItemAppDataValue(this.previousNote, 'locked') ?? false
+        const previousLockState = this.componentRelay!.getItemAppDataValue(previousNote, 'locked') ?? false
         const newLockState = this.componentRelay!.getItemAppDataValue(this.currentNote, 'locked') ?? false
 
         if (previousLockState != newLockState) {
