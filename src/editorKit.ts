@@ -177,7 +177,7 @@ export default class EditorKitBase {
         const previousLockState = this.componentRelay!.getItemAppDataValue(previousNote, 'locked') ?? false
         const newLockState = this.componentRelay!.getItemAppDataValue(this.note, 'locked') ?? false
 
-        if (previousLockState != newLockState) {
+        if (previousLockState !== newLockState) {
           this.delegate.onNoteLockToggle(newLockState)
         }
       }
