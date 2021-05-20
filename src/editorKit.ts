@@ -34,7 +34,6 @@ export interface EditorKitDelegate {
   clearUndoHistory: () => void
   generateCustomPreview: (text: string) => { html: string, plain: string }
   onNoteLockToggle?: (isLocked: boolean) => void
-  onNoteContentChange?: (newContent: any) => void
 }
 
 enum EditorKitMode {
@@ -173,15 +172,6 @@ export default class EditorKitBase {
       }
 
       this.delegate.setEditorRawText(text)
-
-      if (this.delegate.onNoteContentChange) {
-        const previousContent = previousNote?.content
-        const newContent = this.note?.content
-
-        if (previousContent != newContent) {
-          this.delegate.onNoteContentChange(newContent)
-        }
-      }
 
       if (this.delegate.onNoteLockToggle) {
         const previousLockState = this.componentRelay!.getItemAppDataValue(previousNote, 'locked') ?? false
