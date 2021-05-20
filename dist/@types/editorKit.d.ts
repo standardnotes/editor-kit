@@ -58,7 +58,7 @@ export default class EditorKitBase {
     private fileSafeLoading?;
     private fileSafeClass?;
     private fileSafeInstance?;
-    private note;
+    private note?;
     private ignoreNextTextChange?;
     private needsFileSafeElementLoad?;
     private previousText?;

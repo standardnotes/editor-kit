@@ -13,6 +13,7 @@ import {
   removeFileSafeSyntaxFromHtml,
   FileSafeFileMetadata
 } from './fileSafeHtml'
+import type { ItemMessagePayload } from '@standardnotes/snjs'
 
 /**
  * The delegate is responsible for responding to events and functions that the EditorKit requires.
@@ -75,7 +76,7 @@ export default class EditorKitBase {
   private fileSafeClass?: any
   private fileSafeInstance?: any
 
-  private note: any
+  private note?: ItemMessagePayload
   private ignoreNextTextChange?: boolean
   private needsFileSafeElementLoad?: boolean
   private previousText?: string
@@ -124,6 +125,8 @@ export default class EditorKitBase {
         isNewNoteLoad = false
       }
 
+      const previousNote = this.note
+
       if (supportsFileSafe) {
         const itemClass = this.fileSafeClass.getSFItemClass()
         this.note = new itemClass(note)
@@ -171,8 +174,12 @@ export default class EditorKitBase {
       this.delegate.setEditorRawText(text)
 
       if (this.delegate.onNoteLockToggle) {
-        const isLocked = this.componentRelay!.getItemAppDataValue(note, 'locked') ?? false
-        this.delegate.onNoteLockToggle(isLocked)
+        const previousLockState = this.componentRelay!.getItemAppDataValue(previousNote, 'locked') ?? false
+        const newLockState = this.componentRelay!.getItemAppDataValue(this.note, 'locked') ?? false
+
+        if (previousLockState !== newLockState) {
+          this.delegate.onNoteLockToggle(newLockState)
+        }
       }
 
       if (isNewNoteLoad) {
