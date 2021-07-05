@@ -387,4 +387,11 @@ export default class EditorKitBase {
       this.fileLoader!.removeCursorStatus(cursorIdentifier)
     })
   }
+
+  /**
+   * saveItemWithPresave from the component relay.
+   */
+  public saveItemWithPresave(note: SNItem, presave?: () => void): void {
+    this.componentRelay!.saveItemWithPresave(note, presave)
+  }
 }
