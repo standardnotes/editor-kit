@@ -13,7 +13,7 @@ import {
   removeFileSafeSyntaxFromHtml,
   FileSafeFileMetadata
 } from './fileSafeHtml'
-import type { ItemMessagePayload } from '@standardnotes/snjs'
+import type { ItemMessagePayload, SNItem } from '@standardnotes/snjs'
 
 /**
  * The delegate is responsible for responding to events and functions that the EditorKit requires.
@@ -34,6 +34,7 @@ export interface EditorKitDelegate {
   clearUndoHistory: () => void
   generateCustomPreview: (text: string) => { html: string, plain: string }
   onNoteLockToggle?: (isLocked: boolean) => void
+  noteShouldBeRendered?: (note: SNItem) => Promise<boolean>
 }
 
 enum EditorKitMode {
@@ -116,7 +117,7 @@ export default class EditorKitBase {
       }
     })
 
-    this.componentRelay.streamContextItem((note) => {
+    this.componentRelay.streamContextItem(async (note) => {
       /**
        * TODO: If note has changed, release previous temp object URLs.
        */
@@ -171,7 +172,12 @@ export default class EditorKitBase {
         text = expandedFileSafeSyntax(text)
       }
 
-      this.delegate.setEditorRawText(text)
+      const noteShouldBeRendered = this.delegate.noteShouldBeRendered ?
+        await this.delegate.noteShouldBeRendered(note) : true
+
+      if (noteShouldBeRendered) {
+        this.delegate.setEditorRawText(text)
+      }
 
       if (this.delegate.onNoteLockToggle) {
         const previousLockState = this.componentRelay!.getItemAppDataValue(previousNote, 'locked') ?? false
