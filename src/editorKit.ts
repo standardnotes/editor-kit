@@ -13,7 +13,7 @@ import {
   removeFileSafeSyntaxFromHtml,
   FileSafeFileMetadata
 } from './fileSafeHtml'
-import type { ItemMessagePayload, SNItem } from '@standardnotes/snjs'
+import type { ItemMessagePayload } from '@standardnotes/snjs'
 
 /**
  * The delegate is responsible for responding to events and functions that the EditorKit requires.
@@ -34,7 +34,7 @@ export interface EditorKitDelegate {
   clearUndoHistory: () => void
   generateCustomPreview: (text: string) => { html: string, plain: string }
   onNoteLockToggle?: (isLocked: boolean) => void
-  noteShouldBeRendered?: (note: SNItem) => Promise<boolean>
+  onNoteValueChange?: (note: ItemMessagePayload) => Promise<void>
 }
 
 enum EditorKitMode {
@@ -117,7 +117,7 @@ export default class EditorKitBase {
       }
     })
 
-    this.componentRelay.streamContextItem(async (note) => {
+    this.componentRelay.streamContextItem(async (note: ItemMessagePayload) => {
       /**
        * TODO: If note has changed, release previous temp object URLs.
        */
@@ -172,12 +172,8 @@ export default class EditorKitBase {
         text = expandedFileSafeSyntax(text)
       }
 
-      const noteShouldBeRendered = this.delegate.noteShouldBeRendered ?
-        await this.delegate.noteShouldBeRendered(note) : true
-
-      if (noteShouldBeRendered) {
-        this.delegate.setEditorRawText(text)
-      }
+      this.delegate.onNoteValueChange && await this.delegate.onNoteValueChange(note)
+      this.delegate.setEditorRawText(text)
 
       if (this.delegate.onNoteLockToggle) {
         const previousLockState = this.componentRelay!.getItemAppDataValue(previousNote, 'locked') ?? false
@@ -391,7 +387,7 @@ export default class EditorKitBase {
   /**
    * saveItemWithPresave from the component relay.
    */
-  public saveItemWithPresave(note: SNItem, presave?: () => void): void {
+  public saveItemWithPresave(note: ItemMessagePayload, presave?: () => void): void {
     this.componentRelay!.saveItemWithPresave(note, presave)
   }
 }
