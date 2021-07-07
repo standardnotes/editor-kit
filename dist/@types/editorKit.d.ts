@@ -1,5 +1,6 @@
 import { FileLoaderOptions } from './fileLoader';
 import { TextExpanderOptions } from './textExpander';
+import type { ItemMessagePayload } from '@standardnotes/snjs';
 /**
  * The delegate is responsible for responding to events and functions that the EditorKit requires.
  * For example, when EditorKit wants to insert a new HTML element, it won't neccessarily know how,
@@ -22,6 +23,7 @@ export interface EditorKitDelegate {
         plain: string;
     };
     onNoteLockToggle?: (isLocked: boolean) => void;
+    onNoteValueChange?: (note: ItemMessagePayload) => Promise<void>;
 }
 declare enum EditorKitMode {
     PlainText = "plaintext",
@@ -94,5 +96,9 @@ export default class EditorKitBase {
      * @returns A file descriptor if successful.
      */
     uploadJSFileObject(file: Blob): Promise<void>;
+    /**
+     * saveItemWithPresave from the component relay.
+     */
+    saveItemWithPresave(note: ItemMessagePayload, presave?: () => void): void;
 }
 export {};

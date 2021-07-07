@@ -34,6 +34,7 @@ export interface EditorKitDelegate {
   clearUndoHistory: () => void
   generateCustomPreview: (text: string) => { html: string, plain: string }
   onNoteLockToggle?: (isLocked: boolean) => void
+  onNoteValueChange?: (note: ItemMessagePayload) => Promise<void>
 }
 
 enum EditorKitMode {
@@ -116,7 +117,7 @@ export default class EditorKitBase {
       }
     })
 
-    this.componentRelay.streamContextItem((note) => {
+    this.componentRelay.streamContextItem(async (note: ItemMessagePayload) => {
       /**
        * TODO: If note has changed, release previous temp object URLs.
        */
@@ -171,6 +172,7 @@ export default class EditorKitBase {
         text = expandedFileSafeSyntax(text)
       }
 
+      this.delegate.onNoteValueChange && await this.delegate.onNoteValueChange(note)
       this.delegate.setEditorRawText(text)
 
       if (this.delegate.onNoteLockToggle) {
@@ -380,5 +382,12 @@ export default class EditorKitBase {
     return this.fileSafeInstance.encryptAndUploadJavaScriptFileObject(file).then(() => {
       this.fileLoader!.removeCursorStatus(cursorIdentifier)
     })
+  }
+
+  /**
+   * saveItemWithPresave from the component relay.
+   */
+  public saveItemWithPresave(note: ItemMessagePayload, presave?: () => void): void {
+    this.componentRelay!.saveItemWithPresave(note, presave)
   }
 }
