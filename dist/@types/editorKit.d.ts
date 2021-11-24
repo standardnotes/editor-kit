@@ -19,7 +19,7 @@ export interface EditorKitDelegate {
     preprocessElement: FileLoaderOptions['preprocessElement'];
     clearUndoHistory: () => void;
     generateCustomPreview: (text: string) => {
-        html: string;
+        html?: string;
         plain: string;
     };
     onNoteLockToggle?: (isLocked: boolean) => void;

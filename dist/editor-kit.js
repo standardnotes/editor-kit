@@ -1037,15 +1037,12 @@ class EditorKitBase {
       note.content.text = text;
 
       if (this.delegate.generateCustomPreview) {
+        var _result$plain;
+
         const result = this.delegate.generateCustomPreview(text);
-
-        if (result.html) {
-          note.content.preview_html = result.html;
-        }
-
-        if (result.plain) {
-          note.content.preview_plain = result.plain;
-        }
+        note.content.preview_plain = (_result$plain = result.plain) !== null && _result$plain !== void 0 ? _result$plain : ' ';
+        note.content.preview_html = result.html;
+        console.log(note.content);
       } else {
         if (mode === EditorKitMode.Html) {
           let preview = removeFileSafeSyntaxFromHtml(text);
