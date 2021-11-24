@@ -339,7 +339,8 @@ export default class EditorKitBase {
 
         if (result.html) {
           note.content.preview_html = result.html
-        } else if (result.plain) {
+        }
+        if (result.plain) {
           note.content.preview_plain = result.plain
         }
       } else {
