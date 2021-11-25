@@ -1042,7 +1042,6 @@ class EditorKitBase {
         const result = this.delegate.generateCustomPreview(text);
         note.content.preview_plain = (_result$plain = result.plain) !== null && _result$plain !== void 0 ? _result$plain : ' ';
         note.content.preview_html = result.html;
-        console.log(note.content);
       } else {
         if (mode === EditorKitMode.Html) {
           let preview = removeFileSafeSyntaxFromHtml(text);
