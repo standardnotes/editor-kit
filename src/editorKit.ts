@@ -32,7 +32,7 @@ export interface EditorKitDelegate {
   insertElement: FileLoaderOptions['insertElement']
   preprocessElement: FileLoaderOptions['preprocessElement']
   clearUndoHistory: () => void
-  generateCustomPreview: (text: string) => { html: string, plain: string }
+  generateCustomPreview: (text: string) => { html?: string, plain: string }
   onNoteLockToggle?: (isLocked: boolean) => void
   onNoteValueChange?: (note: ItemMessagePayload) => Promise<void>
 }
@@ -337,11 +337,8 @@ export default class EditorKitBase {
       if (this.delegate.generateCustomPreview) {
         const result = this.delegate.generateCustomPreview(text)
 
-        if (result.html) {
-          note.content.preview_html = result.html
-        } else if (result.plain) {
-          note.content.preview_plain = result.plain
-        }
+        note.content.preview_plain = result.plain ?? ' '
+        note.content.preview_html = result.html
       } else {
         if (mode === EditorKitMode.Html) {
           let preview = removeFileSafeSyntaxFromHtml(text)
