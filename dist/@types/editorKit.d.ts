@@ -24,6 +24,7 @@ export interface EditorKitDelegate {
     };
     onNoteLockToggle?: (isLocked: boolean) => void;
     onNoteValueChange?: (note: ItemMessagePayload) => Promise<void>;
+    onThemesChange?: () => void;
 }
 declare enum EditorKitMode {
     PlainText = "plaintext",

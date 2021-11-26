@@ -35,6 +35,7 @@ export interface EditorKitDelegate {
   generateCustomPreview: (text: string) => { html?: string, plain: string }
   onNoteLockToggle?: (isLocked: boolean) => void
   onNoteValueChange?: (note: ItemMessagePayload) => Promise<void>
+  onThemesChange?: () => void
 }
 
 enum EditorKitMode {
@@ -114,7 +115,8 @@ export default class EditorKitBase {
         if (platform) {
           document.documentElement.classList.add(platform)
         }
-      }
+      },
+      onThemesChange: this.delegate.onThemesChange
     })
 
     this.componentRelay.streamContextItem(async (note: ItemMessagePayload) => {
