@@ -405,4 +405,18 @@ export default class EditorKitBase {
   public saveItemWithPresave(note: ItemMessagePayload, presave?: () => void): void {
     this.componentRelay!.saveItemWithPresave(note, presave)
   }
+
+  /**
+   * Gets the current platform where the component is running.
+   */
+   public get platform(): string | undefined {
+    return this.componentRelay!.platform
+  }
+
+  /**
+   * Gets the current environment where the component is running.
+   */
+  public get environment(): string | undefined {
+    return this.componentRelay!.environment
+  }
 }
