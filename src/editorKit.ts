@@ -23,22 +23,22 @@ import type { ItemMessagePayload } from '@standardnotes/snjs'
  * with the appropriate callbacks.
  */
 export interface EditorKitDelegate {
-  insertRawText: (text: string) => void
+  insertRawText?: (text: string) => void
   setEditorRawText: (text: string) => void
-  getCurrentLineText: TextExpanderOptions['getCurrentLineText']
-  getPreviousLineText: TextExpanderOptions['getPreviousLineText']
-  replaceText: TextExpanderOptions['replaceText']
-  getElementsBySelector: FileLoaderOptions['getElementsBySelector']
-  insertElement: FileLoaderOptions['insertElement']
-  preprocessElement: FileLoaderOptions['preprocessElement']
-  clearUndoHistory: () => void
-  generateCustomPreview: (text: string) => { html?: string, plain: string }
+  getCurrentLineText?: TextExpanderOptions['getCurrentLineText']
+  getPreviousLineText?: TextExpanderOptions['getPreviousLineText']
+  replaceText?: TextExpanderOptions['replaceText']
+  getElementsBySelector?: FileLoaderOptions['getElementsBySelector']
+  insertElement?: FileLoaderOptions['insertElement']
+  preprocessElement?: FileLoaderOptions['preprocessElement']
+  clearUndoHistory?: () => void
+  generateCustomPreview?: (text: string) => { html?: string, plain: string }
   onNoteLockToggle?: (isLocked: boolean) => void
   onNoteValueChange?: (note: ItemMessagePayload) => Promise<void>
   onThemesChange?: () => void
 }
 
-enum EditorKitMode {
+export enum EditorKitMode {
   PlainText = 'plaintext',
   Html = 'html',
   Markdown = 'markdown',
@@ -50,15 +50,15 @@ type EditorKitOptions = {
   /**
    * Indicates if the editor should support FileSafe integration.
    */
-  supportsFileSafe: false
+  supportsFileSafe?: false
   /**
    * For Component Relay saving. Indicates if debouncer is enabled.
    */
-  coallesedSaving: false
+  coallesedSaving?: false
   /**
    * For Component Relay saving. Indicates what the debouncer ms delay should be set to.
    */
-  coallesedSavingDelay: 250
+  coallesedSavingDelay?: 250
 }
 
 type OnEditorKeyUpParams = {
@@ -187,7 +187,7 @@ export default class EditorKitBase {
       }
 
       if (isNewNoteLoad) {
-        this.delegate.clearUndoHistory()
+        this.delegate.clearUndoHistory && this.delegate.clearUndoHistory()
       }
     })
   }
@@ -201,6 +201,22 @@ export default class EditorKitBase {
   }
 
   private configureFileSafe() {
+    const delegateFunctions = [
+      'getCurrentLineText',
+      'getPreviousLineText',
+      'replaceText',
+      'getElementsBySelector',
+      'insertElement',
+      'preprocessElement',
+      'insertRawText'
+    ]
+
+    for (const theFunction of delegateFunctions) {
+      if (!this.delegate[theFunction]) {
+        throw Error(`Missing ${theFunction} delegate function.`)
+      }
+    }
+
     this.fileSafeInstance = new this.fileSafeClass({
       componentManager: this.componentRelay
     })
@@ -223,7 +239,7 @@ export default class EditorKitBase {
           this.fileIdsPendingAssociation.splice(this.fileIdsPendingAssociation.indexOf(uuid), 1)
 
           const syntax = insertionSyntaxForFileDescriptor(descriptor)
-          this.delegate.insertRawText(syntax)
+          this.delegate.insertRawText!(syntax)
         }
 
         if (hasMatch) {
@@ -246,16 +262,16 @@ export default class EditorKitBase {
 
     this.fileLoader = new FileLoader({
       fileSafeInstance: this.fileSafeInstance,
-      getElementsBySelector: this.delegate.getElementsBySelector,
-      insertElement: this.delegate.insertElement,
-      preprocessElement: this.delegate.preprocessElement
+      getElementsBySelector: this.delegate.getElementsBySelector!,
+      insertElement: this.delegate.insertElement!,
+      preprocessElement: this.delegate.preprocessElement!
     })
 
     this.textExpander = new TextExpander({
       afterExpand: () => this.fileLoader!.loadFileSafeElements(),
-      getCurrentLineText: this.delegate.getCurrentLineText,
-      getPreviousLineText: this.delegate.getPreviousLineText,
-      replaceText: this.delegate.replaceText,
+      getCurrentLineText: this.delegate.getCurrentLineText!,
+      getPreviousLineText: this.delegate.getPreviousLineText!,
+      replaceText: this.delegate.replaceText!,
       patterns: [{
         regex: FileSafeSyntaxPattern,
         callback: (matchedText) => {
