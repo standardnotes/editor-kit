@@ -9,16 +9,16 @@ import type { ItemMessagePayload } from '@standardnotes/snjs';
  * with the appropriate callbacks.
  */
 export interface EditorKitDelegate {
-    insertRawText: (text: string) => void;
+    insertRawText?: (text: string) => void;
     setEditorRawText: (text: string) => void;
-    getCurrentLineText: TextExpanderOptions['getCurrentLineText'];
-    getPreviousLineText: TextExpanderOptions['getPreviousLineText'];
-    replaceText: TextExpanderOptions['replaceText'];
-    getElementsBySelector: FileLoaderOptions['getElementsBySelector'];
-    insertElement: FileLoaderOptions['insertElement'];
-    preprocessElement: FileLoaderOptions['preprocessElement'];
-    clearUndoHistory: () => void;
-    generateCustomPreview: (text: string) => {
+    getCurrentLineText?: TextExpanderOptions['getCurrentLineText'];
+    getPreviousLineText?: TextExpanderOptions['getPreviousLineText'];
+    replaceText?: TextExpanderOptions['replaceText'];
+    getElementsBySelector?: FileLoaderOptions['getElementsBySelector'];
+    insertElement?: FileLoaderOptions['insertElement'];
+    preprocessElement?: FileLoaderOptions['preprocessElement'];
+    clearUndoHistory?: () => void;
+    generateCustomPreview?: (text: string) => {
         html?: string;
         plain: string;
     };
@@ -26,7 +26,7 @@ export interface EditorKitDelegate {
     onNoteValueChange?: (note: ItemMessagePayload) => Promise<void>;
     onThemesChange?: () => void;
 }
-declare enum EditorKitMode {
+export declare enum EditorKitMode {
     PlainText = "plaintext",
     Html = "html",
     Markdown = "markdown",
@@ -37,15 +37,15 @@ declare type EditorKitOptions = {
     /**
      * Indicates if the editor should support FileSafe integration.
      */
-    supportsFileSafe: false;
+    supportsFileSafe?: false;
     /**
      * For Component Relay saving. Indicates if debouncer is enabled.
      */
-    coallesedSaving: false;
+    coallesedSaving?: false;
     /**
      * For Component Relay saving. Indicates what the debouncer ms delay should be set to.
      */
-    coallesedSavingDelay: 250;
+    coallesedSavingDelay?: 250;
 };
 declare type OnEditorKeyUpParams = {
     isSpace: boolean;
@@ -101,5 +101,13 @@ export default class EditorKitBase {
      * saveItemWithPresave from the component relay.
      */
     saveItemWithPresave(note: ItemMessagePayload, presave?: () => void): void;
+    /**
+     * Gets the current platform where the component is running.
+     */
+    get platform(): string | undefined;
+    /**
+     * Gets the current environment where the component is running.
+     */
+    get environment(): string | undefined;
 }
 export {};
