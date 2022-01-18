@@ -135,6 +135,8 @@ __webpack_require__.d(__webpack_exports__, {
   "default": () => (/* binding */ EditorKitBase)
 });
 
+// UNUSED EXPORTS: EditorKitMode
+
 // EXTERNAL MODULE: ../component-relay/dist/dist.js
 var dist = __webpack_require__(968);
 var dist_default = /*#__PURE__*/__webpack_require__.n(dist);
@@ -736,7 +738,7 @@ function editorKit_defineProperty(obj, key, value) { if (key in obj) { Object.de
 
 
 
-var EditorKitMode;
+let EditorKitMode;
 
 (function (EditorKitMode) {
   EditorKitMode["PlainText"] = "plaintext";
@@ -881,7 +883,7 @@ class EditorKitBase {
       }
 
       if (isNewNoteLoad) {
-        this.delegate.clearUndoHistory();
+        this.delegate.clearUndoHistory && this.delegate.clearUndoHistory();
       }
     });
   }
@@ -895,6 +897,14 @@ class EditorKitBase {
   }
 
   configureFileSafe() {
+    const delegateFunctions = ['getCurrentLineText', 'getPreviousLineText', 'replaceText', 'getElementsBySelector', 'insertElement', 'preprocessElement', 'insertRawText'];
+
+    for (const theFunction of delegateFunctions) {
+      if (!this.delegate[theFunction]) {
+        throw Error("Missing ".concat(theFunction, " delegate function."));
+      }
+    }
+
     this.fileSafeInstance = new this.fileSafeClass({
       componentManager: this.componentRelay
     });
@@ -1094,6 +1104,22 @@ class EditorKitBase {
 
   saveItemWithPresave(note, presave) {
     this.componentRelay.saveItemWithPresave(note, presave);
+  }
+  /**
+   * Gets the current platform where the component is running.
+   */
+
+
+  get platform() {
+    return this.componentRelay.platform;
+  }
+  /**
+   * Gets the current environment where the component is running.
+   */
+
+
+  get environment() {
+    return this.componentRelay.environment;
   }
 
 }
