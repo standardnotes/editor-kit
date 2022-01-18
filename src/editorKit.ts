@@ -187,7 +187,7 @@ export default class EditorKitBase {
       }
 
       if (isNewNoteLoad) {
-        this.delegate.clearUndoHistory && this.delegate.clearUndoHistory()
+        this.delegate.clearUndoHistory?.()
       }
     })
   }
@@ -201,7 +201,7 @@ export default class EditorKitBase {
   }
 
   private configureFileSafe() {
-    const delegateFunctions = [
+    const requiredDelegateFunctions = [
       'getCurrentLineText',
       'getPreviousLineText',
       'replaceText',
@@ -211,9 +211,9 @@ export default class EditorKitBase {
       'insertRawText'
     ]
 
-    for (const theFunction of delegateFunctions) {
-      if (!this.delegate[theFunction]) {
-        throw Error(`Missing ${theFunction} delegate function.`)
+    for (const functionName of requiredDelegateFunctions) {
+      if (!this.delegate[functionName]) {
+        throw Error(`Missing ${functionName} delegate function.`)
       }
     }
 
