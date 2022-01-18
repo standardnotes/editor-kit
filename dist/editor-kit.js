@@ -883,7 +883,9 @@ class EditorKitBase {
       }
 
       if (isNewNoteLoad) {
-        this.delegate.clearUndoHistory && this.delegate.clearUndoHistory();
+        var _this$delegate$clearU, _this$delegate;
+
+        (_this$delegate$clearU = (_this$delegate = this.delegate).clearUndoHistory) === null || _this$delegate$clearU === void 0 ? void 0 : _this$delegate$clearU.call(_this$delegate);
       }
     });
   }
@@ -897,11 +899,11 @@ class EditorKitBase {
   }
 
   configureFileSafe() {
-    const delegateFunctions = ['getCurrentLineText', 'getPreviousLineText', 'replaceText', 'getElementsBySelector', 'insertElement', 'preprocessElement', 'insertRawText'];
+    const requiredDelegateFunctions = ['getCurrentLineText', 'getPreviousLineText', 'replaceText', 'getElementsBySelector', 'insertElement', 'preprocessElement', 'insertRawText'];
 
-    for (const theFunction of delegateFunctions) {
-      if (!this.delegate[theFunction]) {
-        throw Error("Missing ".concat(theFunction, " delegate function."));
+    for (const functionName of requiredDelegateFunctions) {
+      if (!this.delegate[functionName]) {
+        throw Error("Missing ".concat(functionName, " delegate function."));
       }
     }
 
