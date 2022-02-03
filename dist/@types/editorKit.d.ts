@@ -26,12 +26,7 @@ export interface EditorKitDelegate {
     onNoteValueChange?: (note: ItemMessagePayload) => Promise<void>;
     onThemesChange?: () => void;
 }
-export declare enum EditorKitMode {
-    PlainText = "plaintext",
-    Html = "html",
-    Markdown = "markdown",
-    Json = "json"
-}
+export declare type EditorKitMode = 'plaintext' | 'html' | 'markdown' | 'json';
 declare type EditorKitOptions = {
     mode: EditorKitMode;
     /**
