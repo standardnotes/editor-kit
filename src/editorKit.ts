@@ -38,12 +38,7 @@ export interface EditorKitDelegate {
   onThemesChange?: () => void
 }
 
-export enum EditorKitMode {
-  PlainText = 'plaintext',
-  Html = 'html',
-  Markdown = 'markdown',
-  Json = 'json'
-}
+export type EditorKitMode = 'plaintext' | 'html' | 'markdown' | 'json';
 
 type EditorKitOptions = {
   mode: EditorKitMode
@@ -151,7 +146,7 @@ export default class EditorKitBase {
        * If it's not, we don't want to convert it to HTML until the user makes an explicit change
        * so we'll ignore the next change event in this case.
        */
-      if (mode === EditorKitMode.Html && isNewNoteLoad) {
+      if (mode === 'html' && isNewNoteLoad) {
         const isHtml = /<[a-z][\s\S]*>/i.test(text)
         if (!isHtml) {
           this.ignoreNextTextChange = true
@@ -358,7 +353,7 @@ export default class EditorKitBase {
         note.content.preview_plain = result.plain ?? ' '
         note.content.preview_html = result.html
       } else {
-        if (mode === EditorKitMode.Html) {
+        if (mode === 'html') {
           let preview = removeFileSafeSyntaxFromHtml(text)
           preview = truncateString(htmlToText(preview))
           /**
