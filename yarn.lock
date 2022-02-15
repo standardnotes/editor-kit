@@ -2842,10 +2842,10 @@ file-entry-cache@^6.0.1:
   dependencies:
     flat-cache "^3.0.4"
 
-filesafe-js@1.0.4:
-  version "1.0.4"
-  resolved "https://registry.yarnpkg.com/filesafe-js/-/filesafe-js-1.0.4.tgz#790a42bb760d1acea5a30f8f28a3dd7fdfc8a633"
-  integrity sha512-WdDfxW1sIjjZgUVqtyeBYCB6rD5xIZ8yjClsegvJiwDGo75cBn6V5cTb3aa4LotEysy1FxLNUHokN8jbVqxGuA==
+filesafe-js@1.0.5:
+  version "1.0.5"
+  resolved "https://registry.yarnpkg.com/filesafe-js/-/filesafe-js-1.0.5.tgz#74068d1b59d2aa5df1be6a8cad6feb76d58fb3d5"
+  integrity sha512-AqYirPpw2kFr9tfYWbEfbpGJP/+9FS25mu+8xZjcmTgMP8xeLm8HjjFQYZ+aX1TgsvfP2+bAL8sMNHtjFiM9TQ==
 
 fill-range@^4.0.0:
   version "4.0.0"
