@@ -1112,6 +1112,14 @@ class EditorKitBase {
   get environment() {
     return this.componentRelay.environment;
   }
+  /**
+   * Whether or not FileSafe can be used.
+   */
+
+
+  canUseFileSafe() {
+    return this.fileSafeInstance.hasLegacyAccess();
+  }
 
 }
 })();
