@@ -104,5 +104,9 @@ export default class EditorKitBase {
      * Gets the current environment where the component is running.
      */
     get environment(): string | undefined;
+    /**
+     * Whether or not FileSafe can be used.
+     */
+    canUseFileSafe(): boolean;
 }
 export {};
