@@ -418,7 +418,7 @@ export default class EditorKitBase {
   /**
    * Whether or not FileSafe can be used.
    */
-   public canUseFileSafe(): boolean {
+  public canUseFileSafe(): boolean {
     return this.fileSafeInstance.hasLegacyAccess()
   }
 }
