@@ -414,4 +414,11 @@ export default class EditorKitBase {
   public get environment(): string | undefined {
     return this.componentRelay!.environment
   }
+
+  /**
+   * Whether or not FileSafe can be used.
+   */
+   public canUseFileSafe(): boolean {
+    return this.fileSafeInstance.hasLegacyAccess()
+  }
 }
