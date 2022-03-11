@@ -188,11 +188,15 @@ export default class EditorKitBase {
   }
 
   private async importFileSafe() {
-    return import('filesafe-js').then((result) => {
-      this.fileSafeClass = result.default
-      this.configureFileSafe()
-      return this.fileSafeInstance
-    })
+    try {
+      return import('filesafe-js').then((result) => {
+        this.fileSafeClass = result.default
+        this.configureFileSafe()
+        return this.fileSafeInstance
+      })
+    } catch (e) {
+      console.warn('[EditorKit] Could not import filesafe-js')
+    }
   }
 
   private configureFileSafe() {

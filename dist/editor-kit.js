@@ -880,11 +880,15 @@ class EditorKitBase {
   }
 
   async importFileSafe() {
-    return Promise.resolve(/* import() */).then(__webpack_require__.t.bind(__webpack_require__, 695, 23)).then(result => {
-      this.fileSafeClass = result.default;
-      this.configureFileSafe();
-      return this.fileSafeInstance;
-    });
+    try {
+      return Promise.resolve(/* import() */).then(__webpack_require__.t.bind(__webpack_require__, 695, 23)).then(result => {
+        this.fileSafeClass = result.default;
+        this.configureFileSafe();
+        return this.fileSafeInstance;
+      });
+    } catch (e) {
+      console.warn('[EditorKit] Could not import filesafe-js');
+    }
   }
 
   configureFileSafe() {

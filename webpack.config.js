@@ -1,5 +1,4 @@
 const path = require('path');
-const CopyWebpackPlugin = require('copy-webpack-plugin');
 const TerserPlugin = require("terser-webpack-plugin");
 
 module.exports = {
@@ -45,16 +44,6 @@ module.exports = {
       }
     ]
   },
-  plugins: [
-    new CopyWebpackPlugin({
-      patterns: [
-        {
-          from: './node_modules/filesafe-js/dist/filesafe-js/EncryptionWorker.js',
-          to: 'filesafe-js/EncryptionWorker.js'
-        },
-      ]
-    }),
-  ],
   optimization: {
     usedExports: true,
     minimize: true,
