@@ -425,4 +425,16 @@ export default class EditorKitBase {
   public canUseFileSafe(): boolean {
     return this.fileSafeInstance.hasLegacyAccess()
   }
+
+  public getComponentDataValueForKey(key: string): any {
+    return this.componentRelay!.getComponentDataValueForKey(key)
+  }
+
+  public setComponentDataValueForKey(key: string, value: any): void {
+    this.componentRelay!.setComponentDataValueForKey(key, value)
+  }
+
+  public isRunningInMobileApplication(): boolean {
+    return this.componentRelay!.isRunningInMobileApplication()
+  }
 }
