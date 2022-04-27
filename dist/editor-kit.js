@@ -1125,6 +1125,18 @@ class EditorKitBase {
     return this.fileSafeInstance.hasLegacyAccess();
   }
 
+  getComponentDataValueForKey(key) {
+    return this.componentRelay.getComponentDataValueForKey(key);
+  }
+
+  setComponentDataValueForKey(key, value) {
+    this.componentRelay.setComponentDataValueForKey(key, value);
+  }
+
+  isRunningInMobileApplication() {
+    return this.componentRelay.isRunningInMobileApplication();
+  }
+
 }
 })();
 
