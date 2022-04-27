@@ -108,5 +108,8 @@ export default class EditorKitBase {
      * Whether or not FileSafe can be used.
      */
     canUseFileSafe(): boolean;
+    getComponentDataValueForKey(key: string): any;
+    setComponentDataValueForKey(key: string, value: any): void;
+    isRunningInMobileApplication(): boolean;
 }
 export {};
