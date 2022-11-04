@@ -3,8 +3,8 @@ const TerserPlugin = require("terser-webpack-plugin");
 
 module.exports = {
   entry: {
-    'editor-kit': './src/editorKit.ts',
-    'editor-kit.min': './src/editorKit.ts',
+    'editor-kit': './src/EditorKit.ts',
+    'editor-kit.min': './src/EditorKit.ts',
   },
   resolve: {
     extensions: ['.ts']
@@ -17,9 +17,6 @@ module.exports = {
     libraryTarget: 'umd',
     libraryExport: 'default',
     umdNamedDefine: true
-  },
-  externals: {
-    'filesafe-js': 'filesafe-js'
   },
   module: {
     rules: [

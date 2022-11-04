@@ -12,5 +12,5 @@ export const truncateString = (text: string, limit = 90): string => {
 }
 
 export const sleep = async (seconds: number): Promise<void> => {
-  await new Promise(resolve => setTimeout(resolve, seconds * 1000))
+  await new Promise((resolve) => setTimeout(resolve, seconds * 1000))
 }
