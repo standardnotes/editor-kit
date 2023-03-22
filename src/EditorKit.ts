@@ -1,6 +1,6 @@
 import ComponentRelay from '@standardnotes/component-relay'
-import { htmlToText, truncateString } from './Utils'
-import type { DecryptedTransferPayload, NoteContent, OutgoingItemMessagePayload } from '@standardnotes/models'
+import { truncateString, htmlToText } from './Utils'
+import type { OutgoingItemMessagePayload, NoteContent, DecryptedTransferPayload } from '@standardnotes/models'
 import { AppDataField } from '@standardnotes/models'
 import { EditorKitDelegate } from './EditorKitDelegate'
 import { EditorKitOptions } from './EditorKitOptions'

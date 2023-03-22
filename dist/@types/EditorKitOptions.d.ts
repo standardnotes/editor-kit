@@ -1,12 +1,12 @@
-export type EditorKitMode = 'plaintext' | 'html' | 'markdown' | 'json';
-export type EditorKitOptions = {
+export declare type EditorKitMode = 'plaintext' | 'html' | 'markdown' | 'json';
+export declare type EditorKitOptions = {
     mode: EditorKitMode;
     /**
      * For Component Relay saving. Indicates if debouncer is enabled.
      */
-    coallesedSaving?: boolean;
+    coallesedSaving?: false;
     /**
      * For Component Relay saving. Indicates what the debouncer ms delay should be set to.
      */
-    coallesedSavingDelay?: number;
+    coallesedSavingDelay?: 250;
 };
