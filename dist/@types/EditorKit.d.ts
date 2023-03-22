@@ -1,7 +1,8 @@
-import type { OutgoingItemMessagePayload, NoteContent, DecryptedTransferPayload } from '@standardnotes/models';
+import type { DecryptedTransferPayload, NoteContent, OutgoingItemMessagePayload } from '@standardnotes/models';
+import { AppDataField } from '@standardnotes/models';
 import { EditorKitDelegate } from './EditorKitDelegate';
 import { EditorKitOptions } from './EditorKitOptions';
-declare type NoteMessagePayload = DecryptedTransferPayload<NoteContent> & OutgoingItemMessagePayload<NoteContent>;
+type NoteMessagePayload = DecryptedTransferPayload<NoteContent> & OutgoingItemMessagePayload<NoteContent>;
 export default class EditorKit {
     private delegate;
     private options;
@@ -30,5 +31,6 @@ export default class EditorKit {
     getComponentDataValueForKey(key: string): any;
     setComponentDataValueForKey(key: string, value: any): void;
     isRunningInMobileApplication(): boolean;
+    getItemAppDataValue(key: AppDataField): any;
 }
 export {};
