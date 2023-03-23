@@ -1,6 +1,7 @@
 import ComponentRelay from '@standardnotes/component-relay'
 import { truncateString, htmlToText } from './Utils'
 import type { OutgoingItemMessagePayload, NoteContent, DecryptedTransferPayload } from '@standardnotes/models'
+import { AppDataField } from '@standardnotes/models'
 import { EditorKitDelegate } from './EditorKitDelegate'
 import { EditorKitOptions } from './EditorKitOptions'
 
@@ -186,5 +187,9 @@ export default class EditorKit {
 
   public isRunningInMobileApplication(): boolean {
     return this.componentRelay!.isRunningInMobileApplication()
+  }
+
+  public getItemAppDataValue(key: AppDataField): any {
+    return this.note && this.componentRelay!.getItemAppDataValue(this.note, key)
   }
 }
