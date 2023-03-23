@@ -273,6 +273,9 @@ class EditorKit {
   isRunningInMobileApplication() {
     return this.componentRelay.isRunningInMobileApplication();
   }
+  getItemAppDataValue(key) {
+    return this.note && this.componentRelay.getItemAppDataValue(this.note, key);
+  }
 }
 })();
 

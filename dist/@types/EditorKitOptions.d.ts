@@ -4,9 +4,9 @@ export declare type EditorKitOptions = {
     /**
      * For Component Relay saving. Indicates if debouncer is enabled.
      */
-    coallesedSaving?: false;
+    coallesedSaving?: boolean;
     /**
      * For Component Relay saving. Indicates what the debouncer ms delay should be set to.
      */
-    coallesedSavingDelay?: 250;
+    coallesedSavingDelay?: number;
 };
