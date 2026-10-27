@@ -1,4 +1,4 @@
-import ComponentRelay from '@standardnotes/component-relay'
+import ComponentRelay, { ScrollContainerOptions, ScrollContainerRegistration } from '@standardnotes/component-relay'
 import { truncateString, htmlToText } from './Utils'
 import type { OutgoingItemMessagePayload, NoteContent, DecryptedTransferPayload } from '@standardnotes/models'
 import { AppDataField } from '@standardnotes/models'
@@ -191,5 +191,12 @@ export default class EditorKit {
 
   public getItemAppDataValue(key: AppDataField): any {
     return this.note && this.componentRelay!.getItemAppDataValue(this.note, key)
+  }
+
+  /**
+   * registerScrollContainer from the component relay.
+   */
+  public registerScrollContainer(element: HTMLElement, options?: ScrollContainerOptions): ScrollContainerRegistration {
+    return this.componentRelay!.registerScrollContainer(element, options)
   }
 }
