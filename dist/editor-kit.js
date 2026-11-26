@@ -279,6 +279,13 @@ class EditorKit {
   registerCaretHandler(handler) {
     return this.componentRelay.registerCaretHandler(handler);
   }
+
+  /**
+   * registerScrollContainer from the component relay.
+   */
+  registerScrollContainer(element, options) {
+    return this.componentRelay.registerScrollContainer(element, options);
+  }
 }
 })();
 

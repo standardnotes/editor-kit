@@ -1,4 +1,9 @@
-import ComponentRelay, { CaretHandler, CaretRegistration } from '@standardnotes/component-relay'
+import ComponentRelay, {
+  CaretHandler,
+  CaretRegistration,
+  ScrollContainerOptions,
+  ScrollContainerRegistration,
+} from '@standardnotes/component-relay'
 import { truncateString, htmlToText } from './Utils'
 import type { OutgoingItemMessagePayload, NoteContent, DecryptedTransferPayload } from '@standardnotes/models'
 import { AppDataField } from '@standardnotes/models'
@@ -195,5 +200,12 @@ export default class EditorKit {
 
   public registerCaretHandler(handler: CaretHandler): CaretRegistration {
     return this.componentRelay!.registerCaretHandler(handler)
+  }
+
+  /**
+   * registerScrollContainer from the component relay.
+   */
+  public registerScrollContainer(element: HTMLElement, options?: ScrollContainerOptions): ScrollContainerRegistration {
+    return this.componentRelay!.registerScrollContainer(element, options)
   }
 }
