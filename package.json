@@ -1,6 +1,6 @@
 {
   "name": "@standardnotes/editor-kit",
-  "version": "2.3.3",
+  "version": "2.4.0",
   "author": "Standard Notes",
   "description": "Standard Notes Editor Kit",
   "public": true,
@@ -17,7 +17,7 @@
     "start": "webpack -w --config webpack.dev.js"
   },
   "dependencies": {
-    "@standardnotes/component-relay": "standardnotes/component-relay#164428640ba59e31e7ca3ca932b7d7521594f17c",
+    "@standardnotes/component-relay": "standardnotes/component-relay#5d59a586d573f7a630ea66b1f9866c4479d472ae",
     "@standardnotes/models": "1.34.3",
     "@standardnotes/snjs": "2.147.2"
   },
@@ -42,5 +42,6 @@
     "webpack": "^5.36.0",
     "webpack-cli": "^4.6.0",
     "webpack-merge": "^5.7.3"
-  }
+  },
+  "packageManager": "yarn@1.22.22+sha512.a6b2f7906b721bba3d67d4aff083df04dad64c399707841b7acf00f6b133b7ac24255f2652fa22ae3534329dc6180534e98d17432037ff6fd140556e2bb3137e"
 }
