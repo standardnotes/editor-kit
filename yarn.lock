@@ -1311,9 +1311,9 @@
   dependencies:
     reflect-metadata "^0.1.13"
 
-"@standardnotes/component-relay@standardnotes/component-relay#53d7f792d50d29b1616bc213792bb8258f0f65f8":
-  version "2.3.2"
-  resolved "https://codeload.github.com/standardnotes/component-relay/tar.gz/53d7f792d50d29b1616bc213792bb8258f0f65f8"
+"@standardnotes/component-relay@standardnotes/component-relay#5d59a586d573f7a630ea66b1f9866c4479d472ae":
+  version "2.4.0"
+  resolved "https://codeload.github.com/standardnotes/component-relay/tar.gz/5d59a586d573f7a630ea66b1f9866c4479d472ae"
   dependencies:
     "@standardnotes/common" "^1.43.0"
     "@standardnotes/features" "1.54.0"
